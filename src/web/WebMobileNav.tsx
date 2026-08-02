@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { WEB_TOKENS } from './tokens';
-import { NAV_ITEMS } from './navItems';
+import { isNavItemActive, NAV_ITEMS } from './navItems';
 
 const VISIBLE_COUNT = 5;
 
@@ -15,11 +15,6 @@ export function WebMobileNav() {
     return null;
   }
 
-  const isActive = (route: string) => {
-    if (route === '/(tabs)') return pathname === '/' || pathname === '/(tabs)';
-    return pathname.startsWith(route);
-  };
-
   const visibleItems = NAV_ITEMS.slice(0, VISIBLE_COUNT);
   const moreItems = NAV_ITEMS.slice(VISIBLE_COUNT);
 
@@ -27,14 +22,15 @@ export function WebMobileNav() {
     <>
       <View style={styles.nav}>
         {visibleItems.map((item) => {
-          const active = isActive(item.route);
+          const active = isNavItemActive(pathname, item);
           return (
             <Pressable
               key={item.route}
               accessibilityLabel={item.label}
               accessibilityRole="button"
+              accessibilityState={{ selected: active }}
               onPress={() => router.push(item.route as Parameters<typeof router.push>[0])}
-              style={styles.navItem}
+              style={[styles.navItem, active ? styles.navItemActive : undefined]}
             >
               <Text style={styles.navIcon}>{item.icon}</Text>
               <Text
@@ -52,6 +48,7 @@ export function WebMobileNav() {
         <Pressable
           accessibilityLabel="More navigation options"
           accessibilityRole="button"
+          accessibilityState={{ expanded: showMore }}
           onPress={() => setShowMore(!showMore)}
           style={styles.navItem}
         >
@@ -64,12 +61,13 @@ export function WebMobileNav() {
         <View style={styles.moreOverlay}>
           <View style={styles.morePanel}>
             {moreItems.map((item) => {
-              const active = isActive(item.route);
+              const active = isNavItemActive(pathname, item);
               return (
                 <Pressable
                   key={item.route}
                   accessibilityLabel={item.label}
                   accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
                   onPress={() => {
                     router.push(item.route as Parameters<typeof router.push>[0]);
                     setShowMore(false);
@@ -116,7 +114,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     gap: 2,
+    minWidth: 0,
+    paddingHorizontal: 2,
     paddingVertical: 4,
+  },
+  navItemActive: {
+    backgroundColor: WEB_TOKENS.colors.secondary,
+    borderRadius: WEB_TOKENS.radii.sm,
   },
   navIcon: {
     fontSize: 20,
@@ -126,6 +130,8 @@ const styles = StyleSheet.create({
     color: WEB_TOKENS.colors.textMuted,
     fontSize: 10,
     fontWeight: '500',
+    flexShrink: 1,
+    maxWidth: '100%',
   },
   navLabelActive: {
     color: WEB_TOKENS.colors.primary,

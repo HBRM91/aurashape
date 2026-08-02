@@ -20,6 +20,7 @@ export function AuthAside() {
         <View style={styles.artFrame}>
           <Image
             accessibilityLabel="Aurashape health illustration"
+            defaultSource={authArtwork}
             source={authArtwork}
             style={styles.art}
           />

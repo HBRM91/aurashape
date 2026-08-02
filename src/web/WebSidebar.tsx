@@ -2,7 +2,7 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimen
 import { usePathname, useRouter } from 'expo-router';
 import { WebLogo } from './WebLogo';
 import { WEB_TOKENS } from './tokens';
-import { NAV_ITEMS } from './navItems';
+import { isNavItemActive, NAV_ITEMS } from './navItems';
 import { useThemeStore } from '@/src/stores/theme';
 
 export function WebSidebar() {
@@ -17,11 +17,6 @@ export function WebSidebar() {
     return null;
   }
 
-  const isActive = (route: string) => {
-    if (route === '/(tabs)') return pathname === '/' || pathname === '/(tabs)';
-    return pathname.startsWith(route);
-  };
-
   const toggleDarkMode = () => {
     setMode(mode === 'dark' ? 'light' : 'dark');
   };
@@ -34,12 +29,13 @@ export function WebSidebar() {
 
       <ScrollView style={styles.navScroll} contentContainerStyle={styles.navScrollContent}>
         {NAV_ITEMS.map((item) => {
-          const active = isActive(item.route);
+          const active = isNavItemActive(pathname, item);
           return (
             <Pressable
               key={item.route}
               accessibilityLabel={`Navigate to ${item.label}`}
               accessibilityRole="link"
+              accessibilityState={{ selected: active }}
               onPress={() => router.push(item.route as Parameters<typeof router.push>[0])}
               style={[
                 styles.navItem,

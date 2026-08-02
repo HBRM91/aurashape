@@ -13,3 +13,7 @@ Task 4: fix round 1/5 (4 addressed, 0 open; no commit)
 Task 4: complete (uncommitted workspace, review clean)
 Task 5: fix round 1/5 (3 addressed, 0 open; no commit)
 Task 5: complete (uncommitted workspace, review clean)
+Task 6: fix round 1/5 (5 addressed, 0 open; no commit)
+Task 6: fix round 2/5 (1 addressed, 0 open; no commit)
+Task 6: complete (uncommitted workspace, review clean)
+Task 7: implementation complete, review blocked by Learn shell integration and export coverage

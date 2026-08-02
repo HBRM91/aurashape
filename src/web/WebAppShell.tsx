@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
-import { Platform, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { usePathname } from 'expo-router';
 import { WEB_TOKENS } from './tokens';
 import { WebSidebar } from './WebSidebar';
 import { WebTopBar } from './WebTopBar';
 import { WebMobileNav } from './WebMobileNav';
+import { getActiveNavItem } from './navItems';
 
 export interface WebAppShellProps {
   children: ReactNode;
@@ -12,6 +14,7 @@ export interface WebAppShellProps {
 
 export function WebAppShell({ children, title }: WebAppShellProps) {
   const { width } = useWindowDimensions();
+  const pathname = usePathname();
   const isDesktop = width >= 768;
 
   if (Platform.OS !== 'web') {
@@ -23,14 +26,11 @@ export function WebAppShell({ children, title }: WebAppShellProps) {
       <WebSidebar />
 
       <View style={[styles.contentArea, isDesktop ? styles.contentAreaDesktop : styles.contentAreaMobile]}>
-        <WebTopBar title={title} />
+        <WebTopBar title={title ?? getActiveNavItem(pathname)?.label} />
 
-        <ScrollView
-          contentContainerStyle={styles.contentPadding}
-          style={styles.contentScroll}
-        >
+        <View style={styles.contentRegion}>
           {children}
-        </ScrollView>
+        </View>
 
         {!isDesktop ? <WebMobileNav /> : null}
       </View>
@@ -57,15 +57,12 @@ const styles = StyleSheet.create({
     marginLeft: 0,
     paddingBottom: 64,
   },
-  contentScroll: {
-    flex: 1,
-  },
-  contentPadding: {
+  contentRegion: {
     marginLeft: 'auto',
     marginRight: 'auto',
     maxWidth: WEB_TOKENS.contentWidths.desktop,
-    padding: WEB_TOKENS.spacing.lg,
-    paddingTop: WEB_TOKENS.spacing.lg,
+    flex: 1,
+    minWidth: 0,
     width: '100%',
   },
 });

@@ -85,3 +85,12 @@ Updated `scripts/build-web.ps1` to verify:
 - `AuthAside` now selects the PNG for web/static export and retains the SVG fallback for native behavior.
 - The focused auth regression test verifies the PNG signature, and `scripts/build-web.ps1` requires the hashed PNG to be emitted with the static export.
 - Verification: focused auth tests passed (9 tests), `npm run build:web` passed, and `npm run check` passed (27 suites, 325 tests).
+
+## Final SSR Artwork Fix
+
+- `AuthFrame` now mounts `AuthAside` on every web render instead of omitting it when hydrated dimensions are below 768px or server dimensions are zero.
+- `AuthAside` applies `display: none` below 768px only when a real client width is available, so mobile does not reserve the aside width while static HTML retains the artwork subtree.
+- Added `defaultSource` to the artwork image so React Native Web includes the hashed `auth-health` PNG reference in static HTML, and strengthened `scripts/build-web.ps1` to require that reference in every public auth route.
+- Added a focused 767px regression test covering mounted-but-hidden mobile behavior.
+- Native behavior remains unchanged: `AuthFrame` exits before rendering the web frame on native platforms, and the native artwork fallback remains SVG.
+- Verification: focused auth tests passed (10 tests), `npm run build:web` passed with image references in all three auth HTML routes, and `npm run check` passed (27 suites, 326 tests).
