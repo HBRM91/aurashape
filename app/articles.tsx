@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, TouchableOpacity, TextInput, Share, Platform } from 'react-native';
 import { WebLearn } from '@/src/web/screens/WebLearn';
+import { WebAppShell } from '@/src/web/WebAppShell';
 import { COLORS } from '@/src/constants/theme';
 import { useThemeColors } from '@/src/stores/theme';
 import { router } from 'expo-router';
@@ -264,7 +265,7 @@ const FOOD_GUIDES: FoodGuide[] = [
 ];
 
 export default function ArticlesScreen() {
-  if (Platform.OS === 'web') return <WebLearn />;
+  if (Platform.OS === 'web') return <WebAppShell title="Learn"><WebLearn /></WebAppShell>;
   const { addComment, likeComment } = useCommentStore();
   const articleComments = useCommentStore((s) => s.articleComments);
   const [expandedArticle, setExpandedArticle] = useState<string | null>(null);

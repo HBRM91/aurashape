@@ -1,6 +1,12 @@
-# SDD ledger — plan: docs/superpowers/plans/2026-08-02-aurashape-web-foundation-and-ai-roadmap.md
+# SDD ledger — plan: docs/superpowers/plans/2026-08-02-aurashape-complete-competitive-plan.md
 
 Baseline: npm run check passes with 20 suites and 233 tests.
+Current: npm run check passes with 28 suites and 331 tests.
+
+## Completed (Tasks 1-7 from original plan)
+
+Tasks 1-6: complete (uncommitted workspace, review clean)
+Task 7: implemented, needs 7A fix for Learn shell integration
 
 Task 1: minor (deferred): empty-string userId is treated as unauthenticated; acceptable for current auth state semantics.
 Task 1: minor (deferred): precedence cases are not explicitly tested; current branch behavior is deterministic.
