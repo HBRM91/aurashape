@@ -12,9 +12,12 @@ import { router } from 'expo-router';
 import { useDiaryStore } from '@/src/stores/diary';
 import { useOnboardingStore } from '@/src/stores/onboarding';
 import { useRecipeStore } from '@/src/stores/recipes';
-import type { MealSlot, DietaryPreference } from '@/src/types';
+import type { MealSlot, Food, DietaryPreference } from '@/src/types';
 import { WebCard } from '../WebCard';
 import { WebButton } from '../WebButton';
+import { FoodSearchSheet } from '../FoodSearchSheet';
+import { BarcodeLookupSheet } from '../BarcodeLookupSheet';
+import { QuickAddSheet } from '../QuickAddSheet';
 import { WEB_TOKENS } from '../tokens';
 
 const SLOTS: { slot: MealSlot; label: string; emoji: string }[] = [
@@ -38,10 +41,12 @@ export function WebDiary() {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
 
-  const { selectedDate, getDailyCalories, getDailyMacros, copyFromDate, getEntriesBySlot, getSlotCalories } = useDiaryStore();
+  const { selectedDate, getDailyCalories, getDailyMacros, copyFromDate, getEntriesBySlot, getSlotCalories, addEntry } = useDiaryStore();
   const onboarding = useOnboardingStore();
-  const [addSheetVisible, setAddSheetVisible] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<MealSlot | null>(null);
+  const [showFoodSearch, setShowFoodSearch] = useState(false);
+  const [showBarcode, setShowBarcode] = useState(false);
+  const [selectedFood, setSelectedFood] = useState<Food | null>(null);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   const calorieTarget = onboarding.calorieTarget || 2000;
   const proteinTarget = onboarding.proteinTargetG || 100;
@@ -58,16 +63,39 @@ export function WebDiary() {
     ? getSuggestions(remainingCal, Math.max(0, proteinTarget - macros.protein), Math.max(0, carbsTarget - macros.carbs), Math.max(0, fatTarget - macros.fat), dietPreference as DietaryPreference)
     : [];
 
-  const handleAddPress = useCallback((slot: MealSlot) => {
-    setSelectedSlot(slot);
-    setAddSheetVisible(true);
+  const handleAddPress = useCallback((_slot: MealSlot) => {
+    setShowFoodSearch(true);
+  }, []);
+
+  const handleFoodSelect = useCallback((food: Food) => {
+    setSelectedFood(food);
+    setShowFoodSearch(false);
+    setShowBarcode(false);
+    setShowQuickAdd(true);
+  }, []);
+
+  const handleQuickAddConfirm = useCallback((mealSlot: MealSlot, servings: number) => {
+    if (selectedFood) {
+      addEntry(selectedFood, mealSlot, servings);
+    }
+    setShowQuickAdd(false);
+    setSelectedFood(null);
+  }, [selectedFood, addEntry]);
+
+  const handleQuickAddClose = useCallback(() => {
+    setShowQuickAdd(false);
+    setSelectedFood(null);
+  }, []);
+
+  const handleBarcodeOpen = useCallback(() => {
+    setShowBarcode(true);
   }, []);
 
   const handleCopyYesterday = useCallback(() => {
     const yesterday = yesterdayStr();
     Alert.alert(
       'Copy Meals',
-      `Copy all entries from yesterday to today?`,
+      'Copy all entries from yesterday to today?',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Copy', onPress: () => copyFromDate(yesterday) },
@@ -80,6 +108,10 @@ export function WebDiary() {
 
   const leftColumn = (
     <View style={styles.column}>
+      <View style={styles.topButtons}>
+        <WebButton label="Search Food" variant="primary" onPress={() => setShowFoodSearch(true)} />
+        <WebButton label="Scan Barcode" variant="secondary" onPress={handleBarcodeOpen} />
+      </View>
       {SLOTS.map(({ slot, label, emoji }) => {
         const entries = getEntriesBySlot(selectedDate, slot);
         const slotCals = getSlotCalories(selectedDate, slot);
@@ -110,7 +142,7 @@ export function WebDiary() {
                     </Text>
                   </View>
                   <Text style={styles.entryCal}>
-                    {((entry.food?.calories_per_serving || 0) * entry.servings)} cal
+                    {Math.round((entry.food?.calories_per_serving || 0) * entry.servings)} cal
                   </Text>
                 </View>
               ))
@@ -165,7 +197,7 @@ export function WebDiary() {
       <WebCard accessibilityLabel="Quick actions">
         <Text style={styles.cardTitle}>Quick Actions</Text>
         <View style={styles.quickActions}>
-          <WebButton label="Scan Barcode" variant="secondary" onPress={() => router.push('/barcode')} />
+          <WebButton label="Scan Barcode" variant="secondary" onPress={handleBarcodeOpen} />
           <WebButton label="View Summary" variant="ghost" onPress={() => router.push('/summary' as any)} />
         </View>
       </WebCard>
@@ -220,38 +252,27 @@ export function WebDiary() {
         <View style={{ height: WEB_TOKENS.spacing.xxl }} />
       </ScrollView>
 
-      {addSheetVisible && (
-        <QuickAddSheet
-          slot={selectedSlot}
-          onClose={() => setAddSheetVisible(false)}
-          onBarcode={() => { setAddSheetVisible(false); router.push('/barcode'); }}
-          onManual={() => { setAddSheetVisible(false); setTimeout(() => router.push('/manual-food' as any), 100); }}
+      {showFoodSearch && (
+        <FoodSearchSheet
+          onSelect={handleFoodSelect}
+          onClose={() => setShowFoodSearch(false)}
         />
       )}
-    </View>
-  );
-}
 
-function QuickAddSheet({
-  slot,
-  onClose,
-  onBarcode,
-  onManual,
-}: {
-  slot: MealSlot | null;
-  onClose: () => void;
-  onBarcode: () => void;
-  onManual: () => void;
-}) {
-  if (!slot) return null;
-  return (
-    <View style={styles.overlay}>
-      <View style={styles.sheet}>
-        <Text style={styles.sheetTitle}>Add to {slot.charAt(0).toUpperCase() + slot.slice(1)}</Text>
-        <WebButton label="Scan Barcode" variant="primary" onPress={onBarcode} />
-        <WebButton label="Add Manually" variant="secondary" onPress={onManual} />
-        <WebButton label="Cancel" variant="ghost" onPress={onClose} />
-      </View>
+      {showBarcode && (
+        <BarcodeLookupSheet
+          onSelect={handleFoodSelect}
+          onClose={() => setShowBarcode(false)}
+        />
+      )}
+
+      {showQuickAdd && selectedFood && (
+        <QuickAddSheet
+          food={selectedFood}
+          onConfirm={handleQuickAddConfirm}
+          onClose={handleQuickAddClose}
+        />
+      )}
     </View>
   );
 }
@@ -290,6 +311,10 @@ const styles = StyleSheet.create({
   column: {
     flex: 1,
     gap: WEB_TOKENS.spacing.md,
+  },
+  topButtons: {
+    flexDirection: 'row',
+    gap: WEB_TOKENS.spacing.sm,
   },
   slotHeader: {
     flexDirection: 'row',
@@ -458,28 +483,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: WEB_TOKENS.radii.pill,
-  },
-  overlay: {
-    position: 'absolute',
-    inset: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: WEB_TOKENS.spacing.lg,
-  },
-  sheet: {
-    backgroundColor: WEB_TOKENS.colors.surface,
-    borderRadius: WEB_TOKENS.radii.lg,
-    padding: WEB_TOKENS.spacing.lg,
-    gap: WEB_TOKENS.spacing.sm,
-    width: '100%',
-    maxWidth: 400,
-    ...WEB_TOKENS.shadows.card,
-  },
-  sheetTitle: {
-    ...WEB_TOKENS.typography.subheading,
-    color: WEB_TOKENS.colors.text,
-    textAlign: 'center',
-    marginBottom: WEB_TOKENS.spacing.sm,
   },
 });

@@ -5,6 +5,7 @@ import { calculateTDEE, calculateMacros } from '@/src/lib/calculator';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { WebOnboarding } from '@/src/web/WebOnboarding';
 import type { Goal, ActivityLevel, DietaryPreference, FastingPlan } from '@/src/types';
 
 const GOAL_OPTIONS: { value: Goal; label: string; emoji: string }[] = [
@@ -470,6 +471,7 @@ function StepNewsletter({ onBack }: StepProps) {
 }
 
 export default function OnboardingScreen() {
+  if (Platform.OS === 'web') return <WebOnboarding onComplete={() => router.replace('/(tabs)')} />;
   const { step, setStep } = useOnboardingStore();
 
   const steps = [

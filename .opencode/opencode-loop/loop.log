@@ -451,3 +451,12 @@
 {"time":"2026-08-02T21:34:58.256Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":288}
 {"time":"2026-08-02T21:35:58.467Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":289}
 {"time":"2026-08-02T21:36:58.935Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":290}
+{"time":"2026-08-02T21:37:59.330Z","line":"due-timer-error","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","error":"EPERM: operation not permitted, rename 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json.35852.1785706679264.tmp' -> 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json'"}
+{"time":"2026-08-02T21:38:01.863Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":291}
+{"time":"2026-08-02T21:39:02.160Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":292}
+{"time":"2026-08-02T21:40:02.627Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":293}
+{"time":"2026-08-02T21:41:03.209Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":294}
+{"time":"2026-08-02T21:42:05.124Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":295}
+{"time":"2026-08-02T21:46:07.540Z","line":"active-stale-recovery","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","startedAt":1785706925139}
+{"time":"2026-08-02T21:46:16.658Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":296}
+{"time":"2026-08-02T21:48:02.873Z","line":"active-stale-recovery","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","startedAt":1785707176660}
