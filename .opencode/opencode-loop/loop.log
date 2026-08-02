@@ -253,3 +253,72 @@
 {"time":"2026-08-02T16:53:15.376Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":120}
 {"time":"2026-08-02T16:54:15.392Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":121}
 {"time":"2026-08-02T16:55:15.417Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":122}
+{"time":"2026-08-02T16:56:15.435Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":123}
+{"time":"2026-08-02T16:57:15.459Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":124}
+{"time":"2026-08-02T16:58:15.479Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":125}
+{"time":"2026-08-02T16:59:15.534Z","line":"due-timer-error","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","error":"EPERM: operation not permitted, rename 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json.35852.1785689955500.tmp' -> 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json'"}
+{"time":"2026-08-02T16:59:16.112Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":126}
+{"time":"2026-08-02T17:00:16.137Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":127}
+{"time":"2026-08-02T17:01:16.155Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":128}
+{"time":"2026-08-02T17:02:16.180Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":129}
+{"time":"2026-08-02T17:03:16.207Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":130}
+{"time":"2026-08-02T17:04:16.287Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":131}
+{"time":"2026-08-02T17:05:16.254Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":132}
+{"time":"2026-08-02T17:06:16.270Z","line":"due-timer-error","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","error":"EPERM: operation not permitted, rename 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json.35852.1785690376265.tmp' -> 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json'"}
+{"time":"2026-08-02T17:06:16.462Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":133}
+{"time":"2026-08-02T17:07:16.478Z","line":"due-timer-error","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","error":"EPERM: operation not permitted, rename 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json.35852.1785690436468.tmp' -> 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json'"}
+{"time":"2026-08-02T17:07:16.651Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":134}
+{"time":"2026-08-02T17:08:16.665Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":135}
+{"time":"2026-08-02T17:09:16.669Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":136}
+{"time":"2026-08-02T17:10:16.681Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":137}
+{"time":"2026-08-02T17:11:16.711Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":138}
+{"time":"2026-08-02T17:12:16.738Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":139}
+{"time":"2026-08-02T17:13:16.761Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":140}
+{"time":"2026-08-02T17:14:16.785Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":141}
+{"time":"2026-08-02T17:15:16.797Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":142}
+{"time":"2026-08-02T17:16:16.814Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":143}
+{"time":"2026-08-02T17:17:16.840Z","line":"due-timer-error","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","error":"EPERM: operation not permitted, rename 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json.35852.1785691036835.tmp' -> 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json'"}
+{"time":"2026-08-02T17:17:18.168Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":144}
+{"time":"2026-08-02T17:18:18.187Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":145}
+{"time":"2026-08-02T17:19:18.224Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":146}
+{"time":"2026-08-02T17:20:18.249Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":147}
+{"time":"2026-08-02T17:21:18.264Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":148}
+{"time":"2026-08-02T17:22:28.741Z","line":"active-stale-recovery","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","startedAt":1785691278266}
+{"time":"2026-08-02T17:23:52.606Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":149}
+{"time":"2026-08-02T17:24:52.649Z","line":"due-timer-error","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","error":"EPERM: operation not permitted, rename 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json.35852.1785691492630.tmp' -> 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json'"}
+{"time":"2026-08-02T17:24:53.226Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":150}
+{"time":"2026-08-02T17:25:53.207Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":151}
+{"time":"2026-08-02T17:26:53.231Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":152}
+{"time":"2026-08-02T17:27:53.244Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":153}
+{"time":"2026-08-02T17:28:53.252Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":154}
+{"time":"2026-08-02T17:29:53.349Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":155}
+{"time":"2026-08-02T17:30:53.292Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":156}
+{"time":"2026-08-02T17:31:53.311Z","line":"due-timer-error","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","error":"EPERM: operation not permitted, rename 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json.35852.1785691913304.tmp' -> 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json'"}
+{"time":"2026-08-02T17:31:54.723Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":157}
+{"time":"2026-08-02T17:32:54.749Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":158}
+{"time":"2026-08-02T17:33:54.762Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":159}
+{"time":"2026-08-02T17:34:54.777Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":160}
+{"time":"2026-08-02T17:35:54.810Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":161}
+{"time":"2026-08-02T17:36:54.812Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":162}
+{"time":"2026-08-02T17:37:54.830Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":163}
+{"time":"2026-08-02T17:38:54.843Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":164}
+{"time":"2026-08-02T17:39:54.869Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":165}
+{"time":"2026-08-02T17:40:54.883Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":166}
+{"time":"2026-08-02T17:41:54.908Z","line":"due-timer-error","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","error":"EPERM: operation not permitted, rename 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json.35852.1785692514902.tmp' -> 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json'"}
+{"time":"2026-08-02T17:41:55.761Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":167}
+{"time":"2026-08-02T17:42:55.782Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":168}
+{"time":"2026-08-02T17:43:55.936Z","line":"due-timer-error","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","error":"EPERM: operation not permitted, rename 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json.35852.1785692635815.tmp' -> 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json'"}
+{"time":"2026-08-02T17:43:56.225Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":169}
+{"time":"2026-08-02T17:44:56.180Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":170}
+{"time":"2026-08-02T17:45:56.210Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":171}
+{"time":"2026-08-02T17:46:56.233Z","line":"due-timer-error","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","error":"EPERM: operation not permitted, rename 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json.35852.1785692816228.tmp' -> 'C:\\GITHUB\\aurashape\\.opencode\\opencode-loop\\ses_03dd3169fffe74WmsZTvyctmXi.json'"}
+{"time":"2026-08-02T17:46:56.366Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":172}
+{"time":"2026-08-02T17:47:56.375Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":173}
+{"time":"2026-08-02T17:48:56.387Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":174}
+{"time":"2026-08-02T17:49:56.403Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":175}
+{"time":"2026-08-02T17:50:56.427Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":176}
+{"time":"2026-08-02T17:51:56.454Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":177}
+{"time":"2026-08-02T17:52:56.469Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":178}
+{"time":"2026-08-02T17:53:56.484Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":179}
+{"time":"2026-08-02T17:54:56.520Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":180}
+{"time":"2026-08-02T17:55:56.536Z","line":"run","sessionID":"ses_03dd3169fffe74WmsZTvyctmXi","job":"default","runCount":181}

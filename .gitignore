@@ -38,7 +38,8 @@ web-build/
 
 supabase/.temp/
 
-scripts/
+scripts/*
+!scripts/build-web.ps1
 
 *.tsbuildinfo
 
