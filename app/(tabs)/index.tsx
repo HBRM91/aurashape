@@ -1,9 +1,12 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Platform } from 'react-native';
 import { router } from 'expo-router';
+import { HomeDashboard } from '@/src/web/HomeDashboard';
 import { COLORS, FASTING_COLORS } from '@/src/constants/theme';
 import { useAuthStore } from '@/src/stores/auth';
 import { useOnboardingStore } from '@/src/stores/onboarding';
 import { useDiaryStore } from '@/src/stores/diary';
+import { useCoachStore } from '@/src/stores/coach';
+import { usePlanStore } from '@/src/stores/plan';
 import { useThemeColors } from '@/src/stores/theme';
 import { WaterTracker, HabitTrackers } from '@/src/components/Trackers';
 import { MacroDonut } from '@/src/components/MacroDonut';
@@ -52,6 +55,7 @@ export default function HomeScreen() {
     .slice(0, 3);
 
   const diaryDates = useDiaryStore((s) => [...new Set(s.entries.map((e) => e.date))]);
+  const { weeklyPlan, generateWeeklyPlan, applyRecommendation } = useCoachStore();
   const healthStreak = (() => {
     let streak = 0;
     for (let i = 0; i < 365; i++) {
@@ -68,6 +72,10 @@ export default function HomeScreen() {
     }
     return streak;
   })();
+
+  if (Platform.OS === 'web') {
+    return <HomeDashboard />;
+  }
 
   return (
     <ScrollView className="flex-1" style={{ backgroundColor: colors.bgSecondary }}>
@@ -341,6 +349,67 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
+      {(Platform.OS as string) !== 'web' && (
+        <View className="mx-4 mb-8">
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center gap-2">
+              <Text className="text-lg">📊</Text>
+              <Text className="text-sm font-bold" style={{ color: colors.text }}>Weekly AI Coach</Text>
+            </View>
+          </View>
+          {weeklyPlan.length > 0 ? (
+            <View className="gap-2">
+              {weeklyPlan.slice(0, 3).map((rec) => (
+                <View
+                  key={rec.id}
+                  className="rounded-xl p-3"
+                  style={{ backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }}
+                >
+                  <View className="flex-row items-start justify-between">
+                    <View className="flex-1 mr-3">
+                      <Text className="text-sm font-semibold" style={{ color: colors.text }} numberOfLines={2}>
+                        {rec.recommendation}
+                      </Text>
+                      <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }} numberOfLines={2}>
+                        {rec.action}
+                      </Text>
+                    </View>
+                    {!rec.applied && (
+                      <TouchableOpacity
+                        onPress={() => applyRecommendation(rec.id)}
+                        className="px-3 py-1 rounded-full bg-green-100"
+                      >
+                        <Text className="text-xs font-semibold text-green-700">Apply</Text>
+                      </TouchableOpacity>
+                    )}
+                    {rec.applied && (
+                      <View className="px-3 py-1 rounded-full bg-green-50">
+                        <Text className="text-xs font-semibold text-green-500">Applied</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <TouchableOpacity
+              onPress={generateWeeklyPlan}
+              className="rounded-xl p-4 items-center"
+              style={{ backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }}
+            >
+              <Text className="text-sm font-bold" style={{ color: COLORS.primary }}>
+                Generate Weekly Coaching Plan
+              </Text>
+              <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
+                Get personalized recommendations based on your data
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      <NativeWeeklyPlanHome />
+
       <View className="h-8" />
     </ScrollView>
   );
@@ -366,5 +435,98 @@ function QuickTile({
       {icon}
       <Text className="text-xs font-semibold text-gray-600 mt-2">{label}</Text>
     </TouchableOpacity>
+  );
+}
+
+function NativeWeeklyPlanHome() {
+  const colors = useThemeColors();
+  const currentPlan = usePlanStore((s) => s.currentPlan);
+  const completion = usePlanStore((s) => s.getWeeklyCompletion());
+  const generatePlan = usePlanStore((s) => s.generatePlan);
+  const onboarding = useOnboardingStore();
+  const goal = onboarding.goal || 'general';
+
+  const todayPlan = usePlanStore((s) => s.getToday());
+  const hasPlan = currentPlan.length > 0;
+
+  const nextAction = (() => {
+    if (!todayPlan) return null;
+    const incompleteMeal = todayPlan.meals.find((m) => !m.completed);
+    if (incompleteMeal) return `🥗 Eat your ${incompleteMeal.slot.toLowerCase()}`;
+    if (!todayPlan.workout.completed) return `🏋️ ${todayPlan.workout.name}`;
+    if (!todayPlan.fasting.completed) return `⏱️ Stick to your ${todayPlan.fasting.plan} fast`;
+    if (!todayPlan.recovery.completed) return '🧘 Do your recovery action';
+    return null;
+  })();
+
+  return (
+    <View className="mx-4 mt-4 mb-2">
+      <View className="flex-row items-center justify-between mb-2">
+        <View className="flex-row items-center gap-2">
+          <Text className="text-lg">📋</Text>
+          <Text className="text-sm font-bold" style={{ color: colors.text }}>Weekly Plan</Text>
+        </View>
+        {hasPlan && (
+          <View className="bg-green-50 px-2 py-0.5 rounded-full">
+            <Text className="text-xs font-semibold text-green-600">{completion}%</Text>
+          </View>
+        )}
+      </View>
+
+      {hasPlan ? (
+        <View
+          className="rounded-2xl p-4"
+          style={{ backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }}
+        >
+          <View className="h-2 rounded-full mb-3" style={{ backgroundColor: colors.bgInput }}>
+            <View
+              className="h-2 rounded-full"
+              style={{ width: `${completion}%`, backgroundColor: COLORS.primary }}
+            />
+          </View>
+          {nextAction && (
+            <Text className="text-sm font-semibold" style={{ color: colors.text }}>
+              {nextAction}
+            </Text>
+          )}
+          {!nextAction && todayPlan && (
+            <Text className="text-sm font-semibold" style={{ color: COLORS.primary }}>
+              All done for today!
+            </Text>
+          )}
+          {!todayPlan && (
+            <Text className="text-sm" style={{ color: colors.textMuted }}>
+              No tasks for today. Check tomorrow!
+            </Text>
+          )}
+          <TouchableOpacity
+            onPress={() => router.navigate('/(tabs)/plan' as any)}
+            className="mt-3 py-2 rounded-xl items-center"
+            style={{ backgroundColor: COLORS.primary + '15' }}
+          >
+            <Text className="text-sm font-semibold" style={{ color: COLORS.primary }}>
+              View Full Plan
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          onPress={() => generatePlan(goal)}
+          className="rounded-2xl p-5 items-center"
+          style={{ backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }}
+        >
+          <Text style={{ fontSize: 32 }}>📋</Text>
+          <Text className="text-sm font-bold mt-3" style={{ color: colors.text }}>
+            No weekly plan yet
+          </Text>
+          <Text className="text-xs mt-1" style={{ color: colors.textMuted }}>
+            Get meal plans, workouts, and fasting goals
+          </Text>
+          <View className="mt-3 px-6 py-2.5 rounded-xl" style={{ backgroundColor: COLORS.primary }}>
+            <Text className="text-white text-sm font-bold">Generate My Plan</Text>
+          </View>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 }

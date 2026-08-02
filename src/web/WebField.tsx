@@ -17,6 +17,7 @@ export interface WebFieldProps extends TextInputProps {
 export function WebField({
   label,
   error,
+  nativeID,
   style,
   accessibilityLabel,
   onFocus,
@@ -24,6 +25,7 @@ export function WebField({
   ...props
 }: WebFieldProps) {
   const [focused, setFocused] = useState(false);
+  const errorId = `${nativeID ?? `web-field-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}-error`;
   const handleFocus: TextInputProps['onFocus'] = (event) => {
     setFocused(true);
     onFocus?.(event);
@@ -38,14 +40,17 @@ export function WebField({
       <Text style={styles.label}>{label}</Text>
       <TextInput
         {...props}
+        {...{ 'aria-invalid': Boolean(error) }}
+        {...{ 'aria-describedby': error ? errorId : undefined }}
         accessibilityLabel={accessibilityLabel ?? label}
+        nativeID={nativeID}
         onBlur={handleBlur}
         onFocus={handleFocus}
         placeholderTextColor={props.placeholderTextColor ?? WEB_TOKENS.colors.textMuted}
         style={[styles.input, focused ? styles.focused : undefined, error ? styles.errorInput : undefined, style]}
       />
       {error ? (
-        <Text accessibilityLiveRegion="polite" style={styles.error}>
+        <Text accessibilityLiveRegion="polite" nativeID={errorId} style={styles.error}>
           {error}
         </Text>
       ) : null}
@@ -67,7 +72,7 @@ const styles = StyleSheet.create({
     backgroundColor: WEB_TOKENS.colors.surface,
     borderColor: WEB_TOKENS.colors.border,
     borderRadius: WEB_TOKENS.radii.sm,
-    borderWidth: 1,
+    borderWidth: 2,
     color: WEB_TOKENS.colors.text,
     minHeight: 48,
     paddingHorizontal: WEB_TOKENS.spacing.md,

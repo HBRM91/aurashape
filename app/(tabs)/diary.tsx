@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { trackScreen } from '@/src/lib/analytics';
-import { View, ScrollView, TouchableOpacity, Alert, Text } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Alert, Text, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { COLORS } from '@/src/constants/theme';
 import { useDiaryStore } from '@/src/stores/diary';
@@ -14,6 +14,8 @@ import { AddFoodSheet } from '@/src/components/AddFoodSheet';
 import { CustomFoodModal } from '@/src/components/CustomFoodModal';
 import type { MealSlot, DietaryPreference } from '@/src/types';
 import { Copy, CookingPot } from 'phosphor-react-native';
+import { WebDiary } from '@/src/web/screens/WebDiary';
+import { FoodCapture } from '@/src/web/FoodCapture';
 
 function yesterdayStr(): string {
   const d = new Date();
@@ -22,6 +24,7 @@ function yesterdayStr(): string {
 }
 
 export default function DiaryScreen() {
+  if (Platform.OS === 'web') return <WebDiary />;
   useEffect(() => { trackScreen('diary'); }, []);
   const {
     selectedDate,
@@ -34,6 +37,7 @@ export default function DiaryScreen() {
   const [addSheetVisible, setAddSheetVisible] = useState(false);
   const [customModalVisible, setCustomModalVisible] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<MealSlot | null>(null);
+  const [showFoodCapture, setShowFoodCapture] = useState(false);
 
   const onboarding = useOnboardingStore();
   const calorieTarget = onboarding.calorieTarget || 2000;
@@ -106,6 +110,16 @@ export default function DiaryScreen() {
             <Text className="text-sm font-semibold" style={{ color: COLORS.primary }}>
               Same as yesterday
             </Text>
+          </TouchableOpacity>
+        )}
+
+        {(Platform.OS as string) === 'web' && (
+          <TouchableOpacity
+            onPress={() => setShowFoodCapture(true)}
+            className="mx-4 mt-3 flex-row items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-50"
+          >
+            <Text className="text-lg">🤖</Text>
+            <Text className="text-sm font-semibold text-blue-600">AI Capture</Text>
           </TouchableOpacity>
         )}
 
@@ -184,6 +198,8 @@ export default function DiaryScreen() {
           setSelectedSlot(null);
         }}
       />
+
+      {showFoodCapture && (Platform.OS as string) === 'web' && <FoodCapture onClose={() => setShowFoodCapture(false)} />}
     </View>
   );
 }

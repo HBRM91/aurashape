@@ -1,0 +1,24 @@
+<svg width="760" height="620" viewBox="0 0 760 620" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M70 482C145 399 215 434 283 463C360 496 421 517 512 461C590 413 646 419 700 461V620H70V482Z" fill="#D4ECDE"/>
+  <circle cx="588" cy="124" r="82" fill="#BFE2CC"/>
+  <circle cx="644" cy="77" r="23" fill="#82C8A2"/>
+  <path d="M159 168C159 142.595 179.595 122 205 122H507C532.405 122 553 142.595 553 168V504C553 529.405 532.405 550 507 550H205C179.595 550 159 529.405 159 504V168Z" fill="#12231B"/>
+  <path d="M180 170C180 154.536 192.536 142 208 142H504C519.464 142 532 154.536 532 170V501C532 516.464 519.464 529 504 529H208C192.536 529 180 516.464 180 501V170Z" fill="#F7FAF8"/>
+  <rect x="332" y="155" width="48" height="6" rx="3" fill="#DCE8E0"/>
+  <text x="214" y="211" fill="#65756C" font-family="Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="1.5">YOUR HEALTH, TODAY</text>
+  <text x="214" y="256" fill="#12231B" font-family="Arial, sans-serif" font-size="28" font-weight="700">A steady start</text>
+  <rect x="214" y="282" width="264" height="104" rx="18" fill="#E4F3EA"/>
+  <path d="M241 346C258 320 271 354 289 332C306 311 319 345 337 327C355 309 366 339 383 322C401 306 418 327 442 301" stroke="#2F8F62" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="442" cy="301" r="8" fill="#2F8F62"/>
+  <text x="238" y="312" fill="#216A49" font-family="Arial, sans-serif" font-size="12" font-weight="700">ENERGY</text>
+  <text x="214" y="434" fill="#65756C" font-family="Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="1.2">TODAY'S CHECK-IN</text>
+  <rect x="214" y="453" width="76" height="42" rx="12" fill="#FFF3E2"/>
+  <rect x="302" y="453" width="76" height="42" rx="12" fill="#E9F0FF"/>
+  <rect x="390" y="453" width="88" height="42" rx="12" fill="#F4EAFE"/>
+  <circle cx="252" cy="474" r="8" fill="#E5A247"/>
+  <circle cx="340" cy="474" r="8" fill="#6D8CD4"/>
+  <circle cx="414" cy="474" r="8" fill="#9F75C7"/>
+  <path d="M92 223C114 208 128 193 135 173" stroke="#2F8F62" stroke-width="7" stroke-linecap="round"/>
+  <path d="M99 221C78 218 64 206 60 189C77 185 95 195 99 221Z" fill="#82C8A2"/>
+  <path d="M128 187C127 164 137 146 157 137C164 158 153 178 128 187Z" fill="#2F8F62"/>
+</svg>

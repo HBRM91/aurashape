@@ -10,6 +10,7 @@ import {
   Dimensions,
   Image,
   Modal,
+  Platform,
 } from 'react-native';
 import Svg, { Circle, Line, Polyline } from 'react-native-svg';
 import * as ImagePicker from 'expo-image-picker';
@@ -21,6 +22,7 @@ import { useThemeColors } from '@/src/stores/theme';
 import type { ThemeColors } from '@/src/stores/theme';
 import { calculateBMI, estimateBodyFatPct } from '@/src/lib/calculator';
 import { Trash, ArrowUp, Camera, Trophy, Star, ChartBar, Barbell } from 'phosphor-react-native';
+import { WebProgress } from '@/src/web/screens/WebProgress';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CHART_WIDTH = SCREEN_WIDTH - 64;
@@ -32,6 +34,7 @@ function todayStr(): string {
 }
 
 export default function ProgressScreen() {
+  if (Platform.OS === 'web') return <WebProgress />;
   useEffect(() => { trackScreen('progress'); }, []);
   const [tab, setTab] = useState<'weight' | 'measurements' | 'photos' | 'insights'>('weight');
   const colors = useThemeColors();

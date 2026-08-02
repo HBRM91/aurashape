@@ -39,9 +39,9 @@ All critical layout and visual styles use React Native `StyleSheet` values. The 
 
 The focused token suite was written before the token implementation. The first focused run failed with the expected missing `../tokens` module. After implementation, the same suite passed with assertions covering brand colors, spacing, radii, typography, shadows, and desktop content width.
 
-The repository's current Jest configuration does not transform React Native modules for `@testing-library/react-native` component rendering, so the focused suite remains intentionally token-only as specified by the task. Component behavior is covered by strict TypeScript validation and direct platform-safe React Native implementations.
+After the initial token suite, 10 primitive component tests were added for the web primitives. The focused verification passed with 13 tests across the token and primitive suites.
 
-## Verification
+## Initial Verification
 
 - `npx jest src/web/__tests__/webTokens.test.ts --runInBand`: passed, 1 suite and 3 tests.
 - `npx tsc --noEmit`: passed.
@@ -50,6 +50,21 @@ The repository's current Jest configuration does not transform React Native modu
 
 ## Concerns
 
-- Component rendering tests should be added when the project Jest setup supports the configured React Native Testing Library transform. This task's required focused token test and the full project check are green.
+- The focused component suite now runs through the repository's Jest setup with the installed React Native Testing Library renderer.
 - The worktree contained unrelated pre-existing changes; none were reverted or edited.
 - No commit was created.
+
+## Review Fixes
+
+- `WebLogo` now explicitly sets `accessible={true}` while retaining its `image` role and `Aurashape` label.
+- `WebField` now emits `aria-invalid={Boolean(error)}`. React Native 0.86 does not support an `invalid` member in `accessibilityState`; the installed React Native Web 0.21 layer supports this ARIA prop.
+- `WebButton` and `WebField` reserve a fixed `2` pixel base border width, so focus changes only border color and do not shift layout. Secondary button borders use the same width.
+- Added `src/web/__tests__/webPrimitives.test.tsx` with coverage for all button variants, disabled/press/focus behavior, field label/error/accessibility output, card and section output, and the accessible logo.
+- Updated Jest minimally to retain the repository's `ts-jest` behavior while using the Expo 57 JavaScript transform for React Native component rendering. Added the `test-renderer` peer required by the installed React Native Testing Library.
+
+## Review Verification
+
+- `npx jest src/web/__tests__/webTokens.test.ts src/web/__tests__/webPrimitives.test.tsx --runInBand`: passed, 2 suites and 13 tests.
+- `npm run check`: passed, 24 suites and 254 tests.
+- `npx tsc --noEmit`: passed as part of `npm run check`.
+- No product screens were modified and no commit was created.

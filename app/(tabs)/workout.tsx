@@ -6,12 +6,15 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  Platform,
 } from 'react-native';
+import { router } from 'expo-router';
 import { COLORS } from '@/src/constants/theme';
 import { useWorkoutStore } from '@/src/stores/workout';
 import { trackScreen } from '@/src/lib/analytics';
 import { useWorkoutPlanStore } from '@/src/stores/workoutPlan';
 import { useThemeColors } from '@/src/stores/theme';
+import { usePlanStore } from '@/src/stores/plan';
 import {
   EXERCISES,
   CATEGORY_LABELS,
@@ -30,6 +33,7 @@ import {
   X,
   Play,
 } from 'phosphor-react-native';
+import { WebWorkout } from '@/src/web/screens/WebWorkout';
 
 const CATEGORIES: ExerciseCategory[] = ['bodyweight', 'dumbbell', 'barbell', 'cardio', 'stretching'];
 
@@ -40,6 +44,7 @@ function formatMin(seconds: number): string {
 }
 
 export default function WorkoutScreen() {
+  if (Platform.OS === 'web') return <WebWorkout />;
   useEffect(() => { trackScreen('workout'); }, []);
   const {
     activeWorkout,
@@ -175,6 +180,7 @@ export default function WorkoutScreen() {
           ))
         )}
       </View>
+      <WorkoutPlanSection />
       <View className="h-16" />
     </ScrollView>
   );
@@ -423,6 +429,44 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
     <View className="flex-row justify-between py-2">
       <Text className="text-sm text-gray-500">{label}</Text>
       <Text className="text-sm font-bold text-gray-700">{value}</Text>
+    </View>
+  );
+}
+
+function WorkoutPlanSection() {
+  const colors = useThemeColors();
+  const today = usePlanStore((s) => s.getToday());
+  const toggleWorkout = usePlanStore((s) => s.toggleWorkout);
+
+  if (!today) return null;
+
+  return (
+    <View className="px-4 mb-4">
+      <TouchableOpacity
+        onPress={() => router.navigate('/(tabs)/plan' as any)}
+        className="rounded-2xl p-4"
+        style={{ backgroundColor: colors.bgCard, borderColor: colors.border, borderWidth: 1 }}
+      >
+        <View className="flex-row items-center gap-2 mb-2">
+          <Text className="text-lg">📋</Text>
+          <Text className="text-sm font-bold" style={{ color: colors.text }}>Today's Plan</Text>
+        </View>
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1 mr-3">
+            <Text className="text-sm font-semibold" style={{ color: colors.text }} numberOfLines={2}>
+              🏋️ {today.workout.name}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => toggleWorkout(today.date)}
+            className={`px-3 py-1.5 rounded-full ${today.workout.completed ? 'bg-green-100' : 'bg-green-50'}`}
+          >
+            <Text className={`text-xs font-semibold ${today.workout.completed ? 'text-green-500' : 'text-green-700'}`}>
+              {today.workout.completed ? 'Done ✓' : 'Complete'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 }

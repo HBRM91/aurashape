@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { useThemeColors } from '@/src/stores/theme';
 import { View, Text, Platform, type ColorValue } from 'react-native';
+import { WebAppShell } from '@/src/web/WebAppShell';
 
 function TabIcon({ name, color }: { name: string; color: ColorValue }) {
   return (
@@ -13,7 +14,7 @@ function TabIcon({ name, color }: { name: string; color: ColorValue }) {
 export default function TabLayout() {
   const colors = useThemeColors();
 
-  return (
+  const tabs = (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
@@ -103,4 +104,10 @@ export default function TabLayout() {
       />
     </Tabs>
   );
+
+  if (Platform.OS === 'web') {
+    return <WebAppShell>{tabs}</WebAppShell>;
+  }
+
+  return tabs;
 }

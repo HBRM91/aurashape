@@ -44,6 +44,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@react-native/jest-preset": "^0.86.2",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^14.0.1",
@@ -53,6 +54,7 @@
     "jest-expo": "^57.0.3",
     "pg": "^8.22.0",
     "sharp": "^0.35.3",
+    "test-renderer": "^1.2.0",
     "ts-jest": "^29.4.12",
     "typescript": "~6.0.3"
   },
@@ -66,7 +68,10 @@
     "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit",
     "check": "tsc --noEmit && jest --no-coverage",
-    "build:web": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-web.ps1"
+    "build:web": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-web.ps1",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "postinstall": "npx playwright install chromium || true"
   },
   "private": true
 }

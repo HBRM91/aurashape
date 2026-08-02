@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Share } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Share, Platform } from 'react-native';
+import { WebLearn } from '@/src/web/screens/WebLearn';
 import { COLORS } from '@/src/constants/theme';
 import { useThemeColors } from '@/src/stores/theme';
 import { router } from 'expo-router';
@@ -7,6 +8,7 @@ import { useCommentStore } from '@/src/stores/comments';
 import type { Comment } from '@/src/stores/comments';
 import { trackScreen } from '@/src/lib/analytics';
 import { useState, useEffect, useMemo } from 'react';
+import { ReadingMode } from '@/src/web/ReadingMode';
 
 interface ArticleSection {
   heading?: string;
@@ -262,6 +264,7 @@ const FOOD_GUIDES: FoodGuide[] = [
 ];
 
 export default function ArticlesScreen() {
+  if (Platform.OS === 'web') return <WebLearn />;
   const { addComment, likeComment } = useCommentStore();
   const articleComments = useCommentStore((s) => s.articleComments);
   const [expandedArticle, setExpandedArticle] = useState<string | null>(null);
@@ -270,6 +273,7 @@ export default function ArticlesScreen() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showScience, setShowScience] = useState<Record<string, boolean>>({});
   const [likedArticles, setLikedArticles] = useState<Record<string, boolean>>({});
+  const [readingMode, setReadingMode] = useState<{articleId: string; claim: string} | null>(null);
   const colors = useThemeColors();
 
   useEffect(() => { trackScreen('articles'); }, []);
@@ -367,6 +371,14 @@ export default function ArticlesScreen() {
                         <Text className="text-xs mt-1" style={{ color: '#166534' }}>{box.authors} — {box.journal}
   {box.year}</Text>
                         <Text className="text-xs mt-2 leading-relaxed" style={{ color: '#14532D' }}>{box.summary}</Text>
+                        {Platform.OS === 'web' && (
+                          <TouchableOpacity
+                            onPress={() => setReadingMode({ articleId: article.id, claim: box.title })}
+                            className="mt-2 flex-row items-center gap-1"
+                          >
+                            <Text className="text-xs font-semibold" style={{ color: COLORS.primary }}>🔍 AI Explain</Text>
+                          </TouchableOpacity>
+                        )}
                       </View>
                     ))}
                   </View>
@@ -522,6 +534,14 @@ export default function ArticlesScreen() {
 
         <View className="h-24" />
       </ScrollView>
+
+      {readingMode && (
+        <ReadingMode
+          articleId={readingMode.articleId}
+          claim={readingMode.claim}
+          onClose={() => setReadingMode(null)}
+        />
+      )}
     </View>
   );
 }

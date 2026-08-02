@@ -72,6 +72,8 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     borderRadius: WEB_TOKENS.radii.pill,
+    borderColor: 'transparent',
+    borderWidth: 2,
     flexDirection: 'row',
     justifyContent: 'center',
     minHeight: 48,
@@ -92,7 +94,7 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: WEB_TOKENS.colors.secondary,
     borderColor: WEB_TOKENS.colors.border,
-    borderWidth: 1,
+    borderWidth: 2,
   },
   secondaryLabel: {
     color: WEB_TOKENS.colors.primaryStrong,

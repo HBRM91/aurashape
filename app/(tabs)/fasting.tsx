@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { COLORS, FASTING_COLORS } from '@/src/constants/theme';
 import { useFastingStore } from '@/src/stores/fasting';
@@ -7,6 +7,8 @@ import { useThemeColors } from '@/src/stores/theme';
 import { useEffect, useState, useRef } from 'react';
 import type { FastingPlan } from '@/src/types';
 import { Pause, Play, Clock, Calendar, List } from 'phosphor-react-native';
+import { WebFasting } from '@/src/web/screens/WebFasting';
+import { usePlanStore } from '@/src/stores/plan';
 
 const RING_SIZE = 220;
 const STROKE_WIDTH = 14;
@@ -31,6 +33,7 @@ function formatTime(totalSeconds: number): string {
 }
 
 export default function FastingScreen() {
+  if (Platform.OS === 'web') return <WebFasting />;
   useEffect(() => { trackScreen('fasting'); }, []);
   const {
     currentPlan,
@@ -203,6 +206,10 @@ export default function FastingScreen() {
         </View>
       </View>
 
+      <View className="px-6 mb-6">
+        <FastingPlanCard />
+      </View>
+
       <View className="px-6 pb-10">
         <View className="flex-row items-center justify-between mb-4">
           <View className="flex-row items-center gap-2">
@@ -229,6 +236,46 @@ export default function FastingScreen() {
         {historyView === 'list' ? <HistorySection colors={colors} /> : <FastingCalendar colors={colors} />}
       </View>
     </ScrollView>
+  );
+}
+
+function FastingPlanCard() {
+  const colors = useThemeColors();
+  const today = usePlanStore((s) => s.getToday());
+  const toggleFasting = usePlanStore((s) => s.toggleFasting);
+
+  if (!today) return null;
+
+  return (
+    <View
+      className="rounded-2xl border p-4"
+      style={{ backgroundColor: colors.bgCard, borderColor: colors.border }}
+    >
+      <View className="flex-row items-center gap-2 mb-3">
+        <Text className="text-lg">📋</Text>
+        <Text className="text-sm font-bold" style={{ color: colors.text }}>Today's Fasting Goal</Text>
+      </View>
+      <View className="flex-row items-center justify-between">
+        <View>
+          <Text className="text-sm font-semibold" style={{ color: FASTING_COLORS.fasting }}>
+            {today.fasting.plan} Plan
+          </Text>
+          <Text className="text-xs mt-0.5" style={{ color: colors.textMuted }}>
+            From your weekly plan
+          </Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => toggleFasting(today.date)}
+          className={`px-4 py-2 rounded-xl ${today.fasting.completed ? 'bg-purple-50' : 'bg-purple-100'}`}
+        >
+          <Text
+            className={`text-xs font-bold ${today.fasting.completed ? 'text-purple-400' : 'text-purple-700'}`}
+          >
+            {today.fasting.completed ? 'Completed ✓' : 'Mark Done'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 }
 

@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Modal, Platform } from 'react-native';
+import { WebCommunity } from '@/src/web/screens/WebCommunity';
 import { COLORS } from '@/src/constants/theme';
 import {
   useCommunityStore, type ForumThread, type ThreadReply,
@@ -23,6 +24,7 @@ const CHALLENGES = [
 ];
 
 export default function CommunityScreen() {
+  if (Platform.OS === 'web') return <WebCommunity />;
   useEffect(() => { trackScreen('community'); }, []);
   const colors = useThemeColors();
   const [tab, setTab] = useState<'forum' | 'recipes' | 'challenges'>('forum');

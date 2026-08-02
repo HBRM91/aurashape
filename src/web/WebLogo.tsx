@@ -16,7 +16,7 @@ export interface WebLogoProps {
 
 export function WebLogo({ compact = false, children, style }: WebLogoProps) {
   return (
-    <View accessibilityLabel="Aurashape" accessibilityRole="image" style={[styles.logo, style]}>
+    <View accessible={true} accessibilityLabel="Aurashape" accessibilityRole="image" style={[styles.logo, style]}>
       <View style={styles.mark}>
         <Text style={styles.markText}>A</Text>
       </View>

@@ -13,6 +13,8 @@ export const WEB_TOKENS = {
     border: '#DCE8E0',
     focus: '#82C8A2',
     error: '#B42318',
+    errorSurface: '#FEF3F2',
+    errorBorder: '#FECACA',
   },
   spacing: {
     xs: 4,

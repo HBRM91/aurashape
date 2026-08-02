@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert, Switch, Linking, Share } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Switch, Linking, Share, Platform } from 'react-native';
+import { WebProfile } from '@/src/web/screens/WebProfile';
 import { COLORS } from '@/src/constants/theme';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeStore, useThemeColors } from '@/src/stores/theme';
@@ -17,6 +18,7 @@ import type { Profile } from '@/src/types';
 import { SunDim, MoonStars, Monitor } from 'phosphor-react-native';
 
 export default function ProfileScreen() {
+  if (Platform.OS === 'web') return <WebProfile />;
   useEffect(() => { trackScreen('profile'); }, []);
   const { user, signOut } = useAuthStore();
   const [profile, setProfile] = useState<Profile | null>(null);

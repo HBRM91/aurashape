@@ -40,6 +40,7 @@ supabase/.temp/
 
 scripts/*
 !scripts/build-web.ps1
+!scripts/assert-web-export.ps1
 
 *.tsbuildinfo
 
