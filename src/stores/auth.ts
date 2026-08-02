@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase } from '@/src/lib/supabase';
+import { supabase, AUTH_REDIRECT_URL } from '@/src/lib/supabase';
 import { sendWelcomeEmail } from '@/src/lib/email';
 import type { Session, User } from '@supabase/supabase-js';
 
@@ -8,6 +8,7 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   initialized: boolean;
+  authError: string | null;
   initialize: () => Promise<void>;
   signUp: (email: string, password: string) => Promise<{ error?: string }>;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
@@ -22,18 +23,31 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   loading: true,
   initialized: false,
+  authError: null,
 
   initialize: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    set({
-      session,
-      user: session?.user ?? null,
-      loading: false,
-      initialized: true,
-    });
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      set({
+        session,
+        user: session?.user ?? null,
+        loading: false,
+        initialized: true,
+        authError: null,
+      });
+    } catch (error) {
+      set({
+        session: null,
+        user: null,
+        loading: false,
+        initialized: true,
+        authError: error instanceof Error ? error.message : 'Unable to load your session',
+      });
+    }
 
     supabase.auth.onAuthStateChange((_event, session) => {
-      set({ session, user: session?.user ?? null });
+      set({ session, user: session?.user ?? null, authError: null });
     });
   },
 
@@ -53,7 +67,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   signInWithGoogle: async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'aurashape://auth/callback' },
+      options: { redirectTo: AUTH_REDIRECT_URL },
     });
     if (error) return { error: error.message };
     return {};
@@ -62,7 +76,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   signInWithApple: async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
-      options: { redirectTo: 'aurashape://auth/callback' },
+      options: { redirectTo: AUTH_REDIRECT_URL },
     });
     if (error) return { error: error.message };
     return {};
