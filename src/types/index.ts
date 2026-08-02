@@ -73,3 +73,44 @@ export interface DailyTip {
   study_summary?: string;
   study_url?: string;
 }
+
+export type SymptomType = 'cramps' | 'headache' | 'fatigue' | 'bloating' | 'mood_swings' | 'acne' | 'tender_breasts' | 'back_pain' | 'nausea' | 'insomnia' | 'cravings';
+export type FlowLevel = 'spotting' | 'light' | 'medium' | 'heavy';
+export type MeditationType = 'breathing' | 'body_scan' | 'sleep' | 'focus' | 'stress_relief' | 'morning' | 'gratitude';
+
+export interface CycleEntry {
+  id: string;
+  startDate: string;
+  endDate?: string;
+  cycleLength: number;
+  periodLength: number;
+  symptoms: Array<{ type: SymptomType; intensity: number; note?: string }>;
+  flowLevel: FlowLevel;
+  notes?: string;
+}
+
+export interface CyclePrediction {
+  nextPeriodStart: string;
+  nextPeriodEnd: string;
+  ovulationDate: string;
+  fertileWindow: { start: string; end: string };
+  currentPhase: 'menstrual' | 'follicular' | 'ovulation' | 'luteal';
+  cycleDay: number;
+}
+
+export interface MeditationSession {
+  id: string;
+  type: MeditationType;
+  durationMinutes: number;
+  completedAt: string;
+  completed: boolean;
+}
+
+export interface BreathingPattern {
+  name: string;
+  inhaleSeconds: number;
+  holdInSeconds: number;
+  exhaleSeconds: number;
+  holdOutSeconds: number;
+  description: string;
+}

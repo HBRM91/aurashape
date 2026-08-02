@@ -20,17 +20,17 @@ Set up the development environment, database schema, authentication flow, privac
 | B4 | Set up Supabase project (EU region: Frankfurt) | 1h | 🔲 |
 | B5 | Write full database schema migration (all tables + RLS + storage buckets) | 4h | ✅ |
 | B6 | Configure Row-Level Security policies for all tables | 2h | ✅ (in migration) |
-| B7 | Supabase Auth integration: email/password, Google OAuth, Apple OAuth | 3h | 🔲 |
-| B8 | Auth screens: Sign Up, Login, Forgot Password | 4h | 🔲 |
-| B9 | Privacy consent screen (before signup, 3 checkboxes, links to policy) | 2h | 🔲 |
-| B10 | Onboarding wizard (6 steps: goal, body info, activity, fasting, plan summary, newsletter) | 6h | 🔲 |
-| B11 | On-device calorie/macro calculator (Mifflin-St Jeor, all goal combos) | 2h | 🔲 |
-| B12 | Profile + Settings screen (edit profile, units, notification prefs, data export, account deletion) | 4h | 🔲 |
-| B13 | Bottom tab navigation shell (Home, Diary, Fasting, Workout, Community, Profile) | 2h | 🔲 |
-| B14 | Configure EAS Build (eas.json: development, preview, production) | 1h | 🔲 |
-| B15 | Set up environment variables (.env, app.config.ts) | 1h | 🔲 |
-| B16 | Initialize Git repo + initial commit | 0.5h | 🔲 |
-| B17 | CI/CD: GitHub Actions test workflow | 1h | 🔲 |
+| B7 | Supabase Auth integration: email/password (✅), Google OAuth (🔲), Apple OAuth (🔲) | 3h | 🟡 |
+| B8 | Auth screens: Sign Up, Login, Forgot Password | 4h | ✅ |
+| B9 | Privacy consent screen (before signup, 3 checkboxes, links to policy) | 2h | ✅ |
+| B10 | Onboarding wizard (6 steps: goal, body info, activity, fasting, plan summary, newsletter) | 6h | ✅ |
+| B11 | On-device calorie/macro calculator (Mifflin-St Jeor, all goal combos) | 2h | ✅ |
+| B12 | Profile + Settings screen (edit profile, units, notification prefs, data export, account deletion) | 4h | ✅ |
+| B13 | Bottom tab navigation shell (Home, Diary, Fasting, Workout, Community, Profile) | 2h | ✅ |
+| B14 | Configure EAS Build (eas.json: development, preview, production) | 1h | ✅ |
+| B15 | Set up environment variables (.env) | 1h | 🟡 (placeholders, needs real values) |
+| B16 | Initialize Git repo + initial commit | 0.5h | ✅ |
+| B17 | CI/CD: GitHub Actions test workflow | 1h | ✅ |
 
 ### Person A — Product / Strategy / Legal
 
@@ -70,18 +70,18 @@ Set up the development environment, database schema, authentication flow, privac
 
 - [x] Expo app runs on iOS simulator and Android emulator
 - [ ] Supabase project live with full schema + RLS
-- [ ] Auth flow works end-to-end (sign up → privacy consent → onboarding → home)
-- [ ] Onboarding wizard calculates correct calorie/macro targets for all goal combinations
-- [ ] Profile + settings screen functional
-- [ ] Tab navigation works across all 6 tabs
+- [x] Auth flow works end-to-end (sign up → privacy consent → onboarding → home)
+- [x] Onboarding wizard calculates correct calorie/macro targets for all goal combinations
+- [x] Profile + settings screen functional
+- [x] Tab navigation works across all 6 tabs
 - [ ] 30 daily tips written (Person C)
 - [ ] 2 articles written (Person C)
 - [ ] Privacy Policy + ToS drafted (Person A)
 - [ ] App icon + splash screen designed (Person C)
 - [ ] App Store + Play Store accounts registered (Person A)
-- [ ] Git repo initialized with initial commit
-- [ ] EAS Build configured
-- [ ] CI/CD pipeline working
+- [x] Git repo initialized with initial commit
+- [x] EAS Build configured
+- [x] CI/CD pipeline working
 
 ---
 

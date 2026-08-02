@@ -1,56 +1,96 @@
-import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/components/useColorScheme';
-
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+import { useAuthStore } from '@/src/stores/auth';
+import { usePrivacyStore } from '@/src/stores/privacy';
+import { useOnboardingStore } from '@/src/stores/onboarding';
+import { useThemeColors } from '@/src/stores/theme';
+import { supabase } from '@/src/lib/supabase';
+import { initSentry } from '@/src/lib/sentry';
+import { initAnalytics, identifyUser } from '@/src/lib/analytics';
+import { initPushNotifications, savePushToken } from '@/src/lib/notifications';
+import { Stack } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+  const { initialized, loading, user } = useAuthStore();
+  const consentAccepted = usePrivacyStore((s) => s.consentAccepted);
+  const onboardingCompleted = useOnboardingStore((s) => s.completed);
+  const [dbOnboarded, setDbOnboarded] = useState<boolean | null>(null);
+  const colors = useThemeColors();
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    useAuthStore.getState().initialize();
+    initSentry();
+    initAnalytics();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    identifyUser(user.id, user.email || '');
+    initPushNotifications().then((token) => {
+      if (token) savePushToken(user.id, token);
+    }).catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setDbOnboarded(null);
+      return;
     }
-  }, [loaded]);
+    supabase
+      .from('profiles')
+      .select('goal')
+      .eq('id', user.id)
+      .single()
+      .then(
+        ({ data }) => {
+          setDbOnboarded(!!data?.goal);
+        },
+        () => {
+          setDbOnboarded(false);
+        }
+      );
+  }, [user]);
 
-  if (!loaded) {
-    return null;
+  if (!initialized || loading || (user && dbOnboarded === null)) {
+    return (
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.bg }}>
+        <ActivityIndicator size="large" color="#4ADE80" />
+      </View>
+    );
   }
 
-  return <RootLayoutNav />;
-}
+  if (!user) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="auth/login" />
+        <Stack.Screen name="auth/signup" />
+        <Stack.Screen name="auth/forgot-password" />
+      </Stack>
+    );
+  }
 
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  if (!consentAccepted) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="onboarding/privacy-consent" />
+      </Stack>
+    );
+  }
+
+  const isOnboarded = onboardingCompleted || dbOnboarded;
+
+  if (!isOnboarded) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="onboarding/index" />
+      </Stack>
+    );
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+    </Stack>
   );
 }

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 432 432" width="432" height="432">
+  <!-- Monochrome version for Android themed icons -->
+  <!-- Arc / aura shape (top) -->
+  <path d="M110 160 Q140 55 216 45 Q292 55 322 160" fill="none" stroke="white" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Arc lower -->
+  <path d="M130 220 Q160 295 216 305 Q272 295 302 220" fill="none" stroke="white" stroke-width="9" stroke-linecap="round"/>
+
+  <!-- Accent arc -->
+  <path d="M150 270 Q190 330 216 338 Q242 330 282 270" fill="none" stroke="white" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Center dot -->
+  <circle cx="216" cy="185" r="16" fill="white"/>
+</svg>

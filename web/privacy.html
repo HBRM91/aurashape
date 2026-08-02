@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Aurashape</title>
+<style>
+  :root { --green: #22C55E; --gray: #374151; --light: #F9FAFB; --border: #E5E7EB; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--gray); line-height: 1.7; background: var(--light); }
+  .container { max-width: 720px; margin: 0 auto; padding: 48px 24px; }
+  header { text-align: center; margin-bottom: 48px; }
+  .logo { font-size: 28px; font-weight: 800; color: var(--green); margin-bottom: 8px; }
+  .tagline { color: #9CA3AF; font-size: 14px; }
+  h1 { font-size: 32px; margin-bottom: 8px; }
+  h2 { font-size: 22px; margin-top: 40px; margin-bottom: 12px; color: var(--green); }
+  h3 { font-size: 16px; margin-top: 24px; margin-bottom: 8px; }
+  p, li { font-size: 15px; color: #4B5563; margin-bottom: 12px; }
+  ul { padding-left: 20px; margin-bottom: 16px; }
+  li { margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  th { background: #F3F4F6; font-weight: 600; color: #374151; }
+  tr:last-child td { border-bottom: none; }
+  .last { text-align: center; color: #9CA3AF; font-size: 13px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); }
+  strong { color: #374151; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">Aurashape</div>
+    <div class="tagline">Your free, privacy-first health companion</div>
+  </header>
+
+  <p><em>Last updated: August 2026</em></p>
+
+  <h2>1. Who We Are</h2>
+  <p>Aurashape is a free health companion app operated from the European Union. Our infrastructure is hosted exclusively on EU-based servers (Frankfurt, Germany) via Supabase.</p>
+  <p>Contact: <strong>privacy@aurashape.app</strong></p>
+
+  <h2>2. What Data We Collect</h2>
+  <h3>Account Data</h3>
+  <p>Email address (for authentication), OAuth provider ID (Google/Apple sign-in), and display name.</p>
+
+  <h3>Health Data (Optional, User-Provided)</h3>
+  <p>Goal preferences, biological sex, date of birth, height, weight, activity level, dietary preference, fasting plan, food diary entries, workout logs, body measurements, and progress photos.</p>
+
+  <h3>Usage Data (Optional, Opt-In)</h3>
+  <p>Anonymous usage analytics via PostHog (EU-hosted). No personally identifiable information is included.</p>
+
+  <h3>Device Data</h3>
+  <p>Push notification token (if enabled) and crash reports via Sentry.</p>
+
+  <h2>3. What We Do NOT Collect</h2>
+  <ul>
+    <li>We do NOT track your location</li>
+    <li>We do NOT access your contacts, calendar, messages, or other apps</li>
+    <li>We do NOT sell your data to anyone. Ever</li>
+    <li>We do NOT use your data for advertising</li>
+    <li>We do NOT share your health data with third parties</li>
+    <li>We do NOT even see your meals — all food logging is processed on-device first</li>
+  </ul>
+
+  <h2>4. Legal Basis for Processing</h2>
+  <ul>
+    <li><strong>Consent</strong> (Art. 6(1)(a) GDPR): Newsletter subscription, analytics opt-in, push notifications</li>
+    <li><strong>Performance of contract</strong> (Art. 6(1)(b) GDPR): Providing the health tracking service you requested</li>
+    <li><strong>Legitimate interest</strong> (Art. 6(1)(f) GDPR): Crash reporting for app stability, basic account security</li>
+  </ul>
+
+  <h2>5. Data Storage & Security</h2>
+  <p>All data is stored on Supabase (PostgreSQL) in the EU (eu-central-1, Frankfurt) and encrypted at rest (AES-256) and in transit (TLS 1.3). Progress photos are stored in private Supabase Storage buckets with Row-Level Security — only you can access your photos.</p>
+
+  <h2>6. Data Retention</h2>
+  <ul>
+    <li><strong>Active account:</strong> Data retained while account exists</li>
+    <li><strong>Deleted account:</strong> All data permanently deleted within 30 days</li>
+    <li><strong>Newsletter:</strong> Unsubscribed immediately on request</li>
+    <li><strong>Crash reports:</strong> Retained for 90 days</li>
+  </ul>
+
+  <h2>7. Your Rights (GDPR)</h2>
+  <ul>
+    <li><strong>Access:</strong> Export your data in JSON format via Settings → Export My Data</li>
+    <li><strong>Rectification:</strong> Edit any profile field or re-run onboarding</li>
+    <li><strong>Erasure:</strong> Delete your account — all data cascade-deleted within 30 days</li>
+    <li><strong>Portability:</strong> JSON export includes all profile, diary, fasting, and workout data</li>
+    <li><strong>Withdraw consent:</strong> Toggle off analytics, newsletter, or push notifications anytime</li>
+    <li><strong>Object:</strong> Contact privacy@aurashape.app</li>
+  </ul>
+
+  <h2>8. Third-Party Services</h2>
+  <table>
+    <tr><th>Service</th><th>Purpose</th><th>Data Shared</th><th>EU-Hosted</th></tr>
+    <tr><td>Supabase</td><td>Database, Auth, Storage</td><td>All account/health data</td><td>Yes (Frankfurt)</td></tr>
+    <tr><td>PostHog</td><td>Analytics (opt-in)</td><td>Anonymous events only</td><td>Yes (EU)</td></tr>
+    <tr><td>Sentry</td><td>Crash reporting</td><td>Stack traces, device info</td><td>Yes</td></tr>
+    <tr><td>Resend</td><td>Transactional email</td><td>Email address</td><td>Yes</td></tr>
+    <tr><td>Open Food Facts</td><td>Food database</td><td>Search queries (anonymized)</td><td>France</td></tr>
+  </table>
+
+  <h2>9. Cookies & Tracking</h2>
+  <p>We do not use cookies. Analytics is opt-in and anonymous. No cross-app tracking. No advertising SDKs.</p>
+
+  <h2>10. Children</h2>
+  <p>Aurashape is not intended for users under 16. We do not knowingly collect data from children.</p>
+
+  <h2>11. Changes</h2>
+  <p>We will notify you of material changes via in-app notice. Continued use after changes constitutes acceptance.</p>
+
+  <h2>12. Contact</h2>
+  <p>Email: <strong>privacy@aurashape.app</strong><br>
+  Supervisory authority: You have the right to lodge a complaint with your local data protection authority.</p>
+
+  <div class="last">&copy; 2026 Aurashape. Built in the EU. Privacy by design.</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1284 2778" width="1284" height="2778">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="42%" r="40%">
+      <stop offset="0%" stop-color="#4ADE80" stop-opacity="0.3"/>
+      <stop offset="60%" stop-color="#4ADE80" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1284" height="2778" fill="white"/>
+
+  <!-- Glow -->
+  <circle cx="642" cy="1200" r="500" fill="url(#glow)"/>
+
+  <!-- Aura arcs -->
+  <path d="M300 1050 Q500 600 642 580 Q784 600 984 1050" fill="none" stroke="#4ADE80" stroke-width="24" stroke-linecap="round" opacity="0.6"/>
+  <path d="M350 1280 Q500 1650 642 1680 Q784 1650 934 1280" fill="none" stroke="#4ADE80" stroke-width="20" stroke-linecap="round" opacity="0.4"/>
+  <path d="M420 1480 Q530 1780 642 1800 Q754 1780 864 1480" fill="none" stroke="#A855F7" stroke-width="16" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- Center circle -->
+  <circle cx="642" cy="1200" r="50" fill="#4ADE80"/>
+
+  <!-- App name -->
+  <text x="642" y="2100" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="120" font-weight="800" fill="#22C55E" letter-spacing="2">Aurashape</text>
+  <text x="642" y="2240" text-anchor="middle" font-family="-apple-system, sans-serif" font-size="48" fill="#9CA3AF" letter-spacing="1">Your free health companion</text>
+</svg>
