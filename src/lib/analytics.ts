@@ -1,8 +1,10 @@
 import { POSTHOG_KEY } from './constants';
+import { isLocalOnly } from './privacyMode';
 
 let enabled = false;
 
 export async function initAnalytics() {
+  if (isLocalOnly()) return;
   if (!POSTHOG_KEY || POSTHOG_KEY === 'your-posthog-key') return;
   try {
     const PostHogLib = require('posthog-react-native');
@@ -18,7 +20,7 @@ export async function initAnalytics() {
 }
 
 export function track(event: string, properties?: Record<string, unknown>) {
-  if (!enabled) return;
+  if (isLocalOnly() || !enabled) return;
   try {
     const PostHogLib = require('posthog-react-native');
     PostHogLib.PostHog.capture(event, properties);
@@ -26,7 +28,7 @@ export function track(event: string, properties?: Record<string, unknown>) {
 }
 
 export function identifyUser(userId: string, email: string) {
-  if (!enabled) return;
+  if (isLocalOnly() || !enabled) return;
   try {
     const PostHogLib = require('posthog-react-native');
     PostHogLib.PostHog.identify(userId, { email });

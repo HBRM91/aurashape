@@ -68,7 +68,10 @@
     "test:coverage": "jest --coverage",
     "typecheck": "tsc --noEmit",
     "check": "tsc --noEmit && jest --no-coverage",
-    "build:web": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-web.ps1",
+    "build:web": "node scripts/build-web.js",
+    "assert:web": "node scripts/assert-web-export.js",
+    "assert:local-privacy": "node scripts/assert-local-privacy.js",
+    "assert:secrets": "node scripts/assert-secret-hygiene.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "postinstall": "npx playwright install chromium || true"

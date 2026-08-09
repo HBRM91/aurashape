@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Svg, Polyline, Circle, Line } from 'react-native-svg';
-import { WEB_TOKENS } from './tokens';
+import { getWebTokens, WEB_TOKENS } from './tokens';
+import { useIsDark } from '@/src/stores/theme';
 import { useAuthStore } from '@/src/stores/auth';
 import { useOnboardingStore } from '@/src/stores/onboarding';
 import { useDiaryStore } from '@/src/stores/diary';
@@ -16,6 +17,10 @@ import { MetricCard } from './MetricCard';
 import { ScienceTipCard } from './ScienceTipCard';
 import { QuickActionGrid } from './QuickActionGrid';
 import { WebButton } from './WebButton';
+import { CoachInsightPanel } from './CoachInsightPanel';
+import { buildLocalCoachContext, getDailyRecommendations } from '@/src/lib/localCoach';
+import { LocalCoachCard } from './LocalCoachCard';
+import { LocalWeeklyReview } from './LocalWeeklyReview';
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
@@ -41,6 +46,7 @@ function computeStreak(diaryDates: string[]): number {
 export function HomeDashboard() {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
+  const tokens = getWebTokens(useIsDark());
 
   const user = useAuthStore((s) => s.user);
   const onboarding = useOnboardingStore();
@@ -79,9 +85,36 @@ export function HomeDashboard() {
   const planToday = getToday();
   const { weeklyPlan, applyRecommendation } = useCoachStore();
   const [dismissedCoachIds, setDismissedCoachIds] = useState<Set<string>>(new Set());
+  const [dismissedLocalIds, setDismissedLocalIds] = useState<Set<string>>(new Set());
+  const [weeklyReviewVisible, setWeeklyReviewVisible] = useState(true);
 
   const remainingCal = Math.max(0, calorieTarget - consumed);
   const waterPercent = Math.min(100, Math.round((waterMl / 2000) * 100));
+
+  const localContexts = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - index);
+    return buildLocalCoachContext(date.toISOString().slice(0, 10));
+  });
+  const localDailyRecommendation = getDailyRecommendations(localContexts[0])
+    .find((recommendation) => !dismissedLocalIds.has(recommendation.id));
+  const hasLocalData = localContexts.some((context) => (
+    context.diaryDaysLogged > 0 || context.workoutsCompleted > 0 || context.fastingSessionsCompleted > 0 || context.waterMl.consumed > 0
+  ));
+  const localCoachCards = (
+    <>
+      {localDailyRecommendation && (
+        <LocalCoachCard
+          recommendation={localDailyRecommendation}
+          onDismiss={(id) => setDismissedLocalIds((current) => new Set(current).add(id))}
+          onSnooze={(id) => setDismissedLocalIds((current) => new Set(current).add(id))}
+        />
+      )}
+      {weeklyReviewVisible && hasLocalData && (
+        <LocalWeeklyReview contexts={localContexts} onDelete={() => setWeeklyReviewVisible(false)} />
+      )}
+    </>
+  );
 
   const macroRows = (
     <View style={styles.macroRow}>
@@ -293,35 +326,12 @@ export function HomeDashboard() {
   const coachInsightCard = (() => {
     const recommendation = weeklyPlan.find((r) => !r.applied && !dismissedCoachIds.has(r.id));
     if (!recommendation) return null;
-    const catEmoji: Record<string, string> = {
-      nutrition: '🥗',
-      fasting: '⏱️',
-      workout: '🏋️',
-      recovery: '😴',
-      hydration: '💧',
-    };
     return (
-      <View style={styles.trendCard}>
-        <View style={styles.coachHeader}>
-          <Text style={styles.coachEmoji}>{catEmoji[recommendation.category] || '📋'}</Text>
-          <Text style={styles.sectionTitle}>Coach Insight</Text>
-        </View>
-        <Text style={styles.coachRec}>{recommendation.recommendation}</Text>
-        <Text style={styles.coachReason}>{recommendation.reason}</Text>
-        <Text style={styles.coachAction}>{recommendation.action}</Text>
-        <View style={styles.coachActions}>
-          <WebButton
-            label="Apply"
-            onPress={() => applyRecommendation(recommendation.id)}
-            variant="primary"
-          />
-          <WebButton
-            label="Dismiss"
-            onPress={() => setDismissedCoachIds((prev) => new Set(prev).add(recommendation.id))}
-            variant="ghost"
-          />
-        </View>
-      </View>
+      <CoachInsightPanel
+        recommendation={recommendation}
+        onApply={applyRecommendation}
+        onDismiss={(id) => setDismissedCoachIds((prev) => new Set(prev).add(id))}
+      />
     );
   })();
 
@@ -397,10 +407,10 @@ export function HomeDashboard() {
 
   if (isDesktop) {
     return (
-      <ScrollView contentContainerStyle={styles.scrollContent} style={styles.scroll}>
+          <ScrollView contentContainerStyle={styles.scrollContent} style={[styles.scroll, { backgroundColor: tokens.colors.page }] }>
         <View style={styles.greetingRow}>
           <View>
-            <Text style={styles.greeting}>Hey, {firstName}</Text>
+                <Text style={[styles.greeting, { color: tokens.colors.text }]}>Hey, {firstName}</Text>
             <Text style={styles.date}>
               {new Date().toLocaleDateString('en-US', {
                 weekday: 'long',
@@ -506,6 +516,7 @@ export function HomeDashboard() {
             <QuickActionGrid />
 
             {coachInsightCard}
+            {localCoachCards}
 
             <View style={styles.tipWrapper}>
               <ScienceTipCard tip={dailyTip} />
@@ -538,9 +549,9 @@ export function HomeDashboard() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollContentMobile} style={styles.scroll}>
+        <ScrollView contentContainerStyle={styles.scrollContentMobile} style={[styles.scroll, { backgroundColor: tokens.colors.page }] }>
       <View style={styles.mobileGreeting}>
-        <Text style={styles.greetingMobile}>Hey, {firstName}</Text>
+            <Text style={[styles.greetingMobile, { color: tokens.colors.text }]}>Hey, {firstName}</Text>
         <Text style={styles.date}>
           {new Date().toLocaleDateString('en-US', {
             weekday: 'long',
@@ -634,6 +645,7 @@ export function HomeDashboard() {
       <QuickActionGrid />
 
       {coachInsightCard}
+      {localCoachCards}
 
       <View style={styles.mobileSection}>
         <ScienceTipCard tip={dailyTip} />

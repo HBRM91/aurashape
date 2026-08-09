@@ -8,6 +8,7 @@ import {
   Switch,
   StyleSheet,
   useWindowDimensions,
+  Linking,
 } from 'react-native';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeStore } from '@/src/stores/theme';
@@ -24,7 +25,10 @@ import type { Profile } from '@/src/types';
 import { WebCard } from '../WebCard';
 import { WebButton } from '../WebButton';
 import { MetricCard } from '../MetricCard';
-import { WEB_TOKENS } from '../tokens';
+import { getWebTokens, WEB_TOKENS } from '../tokens';
+import { useIsDark } from '@/src/stores/theme';
+import { isLocalOnly } from '@/src/lib/privacyMode';
+import { clearLocalUserData } from '@/src/lib/localData';
 
 export function WebProfile() {
   useEffect(() => {
@@ -33,8 +37,12 @@ export function WebProfile() {
 
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
+  const tokens = getWebTokens(useIsDark());
 
   const { user, signOut } = useAuthStore();
+  const diaryCount = useDiaryStore((s) => s.entries.length);
+  const workoutCount = useWorkoutStore((s) => s.history.length);
+  const mindfulCount = useMeditationStore((s) => s.sessions.length);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -62,6 +70,11 @@ export function WebProfile() {
     Alert.alert('Delete Account', 'This permanently deletes all your data. This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: async () => {
+        if (isLocalOnly()) {
+          await clearLocalUserData();
+          Alert.alert('Deleted', 'Your local data has been deleted from this device.');
+          return;
+        }
         const { error } = await supabase.rpc('delete_user');
         if (error) Alert.alert('Error', error.message);
       }},
@@ -141,9 +154,9 @@ export function WebProfile() {
       ) : null}
 
       <View style={styles.statRow}>
-        <MetricCard label="Day Streak" value="--" icon="🔥" />
-        <MetricCard label="Workouts" value="--" icon="#x1f4aa#" />
-        <MetricCard label="Goal Progress" value="--" icon="🎯" />
+        <MetricCard label="Meals logged" value={String(diaryCount)} icon="🍽️" />
+        <MetricCard label="Workouts" value={String(workoutCount)} icon="💪" />
+        <MetricCard label="Mindful sessions" value={String(mindfulCount)} icon="🧘" />
       </View>
     </View>
   );
@@ -160,13 +173,13 @@ export function WebProfile() {
           <Text style={styles.settingBtnText}>Export My Data</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => {}}
+          onPress={() => Linking.openURL('https://aurashape.pages.dev/privacy')}
           style={styles.settingBtn}
         >
           <Text style={styles.settingBtnText}>Privacy Policy</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => {}}
+          onPress={() => Linking.openURL('https://aurashape.pages.dev/terms')}
           style={styles.settingBtn}
         >
           <Text style={styles.settingBtnText}>Terms of Service</Text>
@@ -183,10 +196,10 @@ export function WebProfile() {
   );
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { backgroundColor: tokens.colors.page }]}>
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Profile</Text>
-        <Text style={styles.pageSub}>{user?.email}</Text>
+        <Text style={[styles.pageTitle, { color: tokens.colors.text }]}>Profile</Text>
+        <Text style={[styles.pageSub, { color: tokens.colors.textMuted }]}>{user?.email}</Text>
       </View>
       <ScrollView style={styles.scroll}>
         <View style={isDesktop ? styles.desktopGrid : styles.mobileStack}>

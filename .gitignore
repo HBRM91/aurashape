@@ -41,10 +41,15 @@ supabase/.temp/
 scripts/*
 !scripts/build-web.ps1
 !scripts/assert-web-export.ps1
+!scripts/build-web.js
+!scripts/assert-web-export.js
+!scripts/assert-local-privacy.js
 
 *.tsbuildinfo
 
 coverage/
+test-results/
+playwright-report/
 
 *.tar.gz
 

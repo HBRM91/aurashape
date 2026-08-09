@@ -12,8 +12,11 @@ interface DiaryState {
   selectedDate: string;
   entries: DiaryEntry[];
   recentFoods: Food[];
+  favoriteFoods: Food[];
   setDate: (date: string) => void;
   addEntry: (food: Food, slot: MealSlot, servings?: number) => void;
+  toggleFavoriteFood: (food: Food) => void;
+  isFavoriteFood: (foodId: string) => boolean;
   updateEntry: (id: string, servings: number) => void;
   removeEntry: (id: string) => void;
   copyFromDate: (fromDate: string) => void;
@@ -43,6 +46,7 @@ export const useDiaryStore = create<DiaryState>()(
       selectedDate: todayStr(),
       entries: [],
       recentFoods: [],
+      favoriteFoods: [],
 
       setDate: (date) => set({ selectedDate: date }),
 
@@ -55,6 +59,16 @@ export const useDiaryStore = create<DiaryState>()(
         try { require('./sync').useSyncStore.getState().enqueue({ table: 'diary_entries', action: 'insert', payload: entry as any }); } catch {}
         try { require('./achievements').useAchievementsStore.getState().checkAchievements(); } catch {}
       },
+
+      toggleFavoriteFood: (food) => {
+        set((state) => ({
+          favoriteFoods: state.favoriteFoods.some((favorite) => favorite.id === food.id)
+            ? state.favoriteFoods.filter((favorite) => favorite.id !== food.id)
+            : [food, ...state.favoriteFoods],
+        }));
+      },
+
+      isFavoriteFood: (foodId) => get().favoriteFoods.some((food) => food.id === foodId),
 
       updateEntry: (id, servings) => {
         set((s) => ({

@@ -1,7 +1,9 @@
 import { useThemeStore, LIGHT_THEME, DARK_THEME } from '@/src/stores/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 beforeEach(() => {
   useThemeStore.setState({ mode: 'system', isDark: false, colors: LIGHT_THEME });
+  (AsyncStorage.setItem as jest.Mock).mockClear();
 });
 
 describe('Theme Store', () => {
@@ -21,6 +23,15 @@ describe('Theme Store', () => {
       useThemeStore.getState().setMode('dark');
       expect(useThemeStore.getState().mode).toBe('dark');
       expect(useThemeStore.getState().isDark).toBe(true);
+    });
+
+    it('should persist the selected mode', () => {
+      useThemeStore.getState().setMode('dark');
+
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+        'theme-storage',
+        expect.stringContaining('"mode":"dark"'),
+      );
     });
 
     it('should apply dark theme colors when switching to dark', () => {

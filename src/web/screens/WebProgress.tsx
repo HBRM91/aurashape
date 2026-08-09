@@ -15,7 +15,10 @@ import { calculateBMI, estimateBodyFatPct } from '@/src/lib/calculator';
 import { WebCard } from '../WebCard';
 import { WebButton } from '../WebButton';
 import { MetricCard } from '../MetricCard';
-import { WEB_TOKENS } from '../tokens';
+import { getWebTokens, WEB_TOKENS } from '../tokens';
+import { useIsDark } from '@/src/stores/theme';
+import { buildWeightProjection } from '@/src/lib/goalProjection';
+import { WeightProjectionChart } from '../WeightProjectionChart';
 
 function todayStr(): string {
   return new Date().toISOString().slice(0, 10);
@@ -30,12 +33,13 @@ export function WebProgress() {
   }, []);
 
   const [tab, setTab] = useState<Tab>('weight');
+  const tokens = getWebTokens(useIsDark());
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { backgroundColor: tokens.colors.page }]}>
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Progress</Text>
-        <Text style={styles.pageSub}>Track your transformation</Text>
+        <Text style={[styles.pageTitle, { color: tokens.colors.text }]}>Progress</Text>
+        <Text style={[styles.pageSub, { color: tokens.colors.textMuted }]}>Track your transformation</Text>
       </View>
 
       <View style={styles.tabRow}>
@@ -73,6 +77,17 @@ function WeightTab() {
   const [weight, setWeight] = useState('');
   const [bodyFat, setBodyFat] = useState('');
   const onboarding = useOnboardingStore();
+
+  const targetKg = onboarding.targetWeightKg;
+  const weeklyChangeKg = onboarding.weeklyChangeKg;
+  const projection = targetKg && weeklyChangeKg
+    ? buildWeightProjection({
+      currentKg: onboarding.weightKg || (weightEntries[weightEntries.length - 1]?.weightKg || targetKg),
+      targetKg,
+      weeklyChangeKg: onboarding.goal === 'lose_weight' ? -Math.abs(weeklyChangeKg) : Math.abs(weeklyChangeKg),
+      startDate: new Date().toISOString().slice(0, 10),
+    })
+    : [];
 
   const handleAdd = () => {
     const w = parseFloat(weight);
@@ -133,6 +148,13 @@ function WeightTab() {
           </View>
         </WebCard>
       )}
+
+      {targetKg && projection.length > 1 ? (
+        <WebCard>
+          <WeightProjectionChart projection={projection} actualEntries={weightEntries} targetKg={targetKg} />
+          <Text style={styles.projectionNote}>This trend is an estimate based on your selected weekly change. Actual progress will vary.</Text>
+        </WebCard>
+      ) : null}
 
       <WebCard>
         <Text style={styles.sectionLabel}>Log Weight</Text>
@@ -486,6 +508,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     ...WEB_TOKENS.typography.caption,
     color: WEB_TOKENS.colors.text,
+  },
+  projectionNote: {
+    ...WEB_TOKENS.typography.caption,
+    color: WEB_TOKENS.colors.textMuted,
+    marginTop: WEB_TOKENS.spacing.sm,
   },
   historyRow: {
     flexDirection: 'row',

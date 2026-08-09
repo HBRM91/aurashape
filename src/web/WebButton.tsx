@@ -8,10 +8,12 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { WEB_TOKENS, type WebButtonVariant } from './tokens';
+import { getWebTokens, WEB_TOKENS, type WebButtonVariant } from './tokens';
+import { useIsDark } from '@/src/stores/theme';
 
 export interface WebButtonProps {
   label: string;
+  accessibilityLabel?: string;
   onPress: (event: GestureResponderEvent) => void;
   variant?: WebButtonVariant;
   disabled?: boolean;
@@ -20,24 +22,26 @@ export interface WebButtonProps {
 
 export function WebButton({
   label,
+  accessibilityLabel,
   onPress,
   variant = 'primary',
   disabled = false,
   style,
 }: WebButtonProps) {
+  const tokens = getWebTokens(useIsDark());
   const [focused, setFocused] = useState(false);
   const selectedStyles = {
     primary: {
-      button: styles.primaryButton,
-      label: styles.primaryLabel,
+      button: [styles.primaryButton, { backgroundColor: tokens.colors.primary }],
+      label: [styles.primaryLabel, { color: tokens.colors.surface }],
     },
     secondary: {
-      button: styles.secondaryButton,
-      label: styles.secondaryLabel,
+      button: [styles.secondaryButton, { backgroundColor: tokens.colors.secondary, borderColor: tokens.colors.border }],
+      label: [styles.secondaryLabel, { color: tokens.colors.primaryStrong }],
     },
     ghost: {
       button: styles.ghostButton,
-      label: styles.ghostLabel,
+      label: [styles.ghostLabel, { color: tokens.colors.primaryStrong }],
     },
   }[variant];
   const handleFocus: PressableProps['onFocus'] = () => setFocused(true);
@@ -46,7 +50,7 @@ export function WebButton({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel || label}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onBlur={handleBlur}
@@ -56,12 +60,12 @@ export function WebButton({
         styles.button,
         selectedStyles.button,
         pressed && !disabled ? styles.pressed : undefined,
-        focused ? styles.focused : undefined,
+        focused ? [styles.focused, { borderColor: tokens.colors.focus }] : undefined,
         disabled ? styles.disabled : undefined,
         style,
       ]}
     >
-      <Text style={[styles.label, selectedStyles.label, disabled ? styles.disabledLabel : undefined]}>
+      <Text style={[styles.label, selectedStyles.label, disabled ? [styles.disabledLabel, { color: tokens.colors.textMuted }] : undefined]}>
         {label}
       </Text>
     </Pressable>

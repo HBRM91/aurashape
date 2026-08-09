@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { generateCoaching } from '@/src/lib/aiClient';
+import { useDiaryStore } from '@/src/stores/diary';
+import { useWaterStore } from '@/src/stores/water';
+import { useWorkoutStore } from '@/src/stores/workout';
+import { useFastingStore } from '@/src/stores/fasting';
 
 interface CoachRecommendation {
   id: string;
@@ -17,7 +22,7 @@ interface CoachState {
   aiEnabled: boolean;
   aiHistory: CoachRecommendation[];
   setAIEnabled: (enabled: boolean) => void;
-  generateWeeklyPlan: () => void;
+  generateWeeklyPlan: () => Promise<void>;
   applyRecommendation: (id: string) => void;
   clearHistory: () => void;
 }
@@ -29,16 +34,48 @@ export const useCoachStore = create<CoachState>()(
       aiEnabled: true,
       aiHistory: [],
       setAIEnabled: (enabled) => set({ aiEnabled: enabled }),
-      generateWeeklyPlan: () => {
-        const now = Date.now();
-        const plan: CoachRecommendation[] = [
-          { id: `c-${now}-1`, category: 'nutrition', recommendation: 'Increase protein to 30g per meal', reason: 'Based on your diary, you average 22g/meal. Research shows 30-40g maximizes muscle protein synthesis.', action: 'Add one egg or 100g Greek yogurt to each meal', createdAt: new Date().toISOString(), applied: false },
-          { id: `c-${now}-2`, category: 'fasting', recommendation: 'Move your eating window 1 hour earlier', reason: 'Your current window ends at 9 PM. Early time-restricted feeding (by 7-8 PM) improves insulin sensitivity.', action: 'Start your fast at 7 PM instead of 8 PM', createdAt: new Date().toISOString(), applied: false },
-          { id: `c-${now}-3`, category: 'workout', recommendation: 'Add one more set per exercise', reason: 'You average 2.3 sets/exercise. 3-4 sets maximizes hypertrophy at your training frequency.', action: 'Add one set to each exercise this week', createdAt: new Date().toISOString(), applied: false },
-          { id: `c-${now}-4`, category: 'hydration', recommendation: 'Increase water intake to 2.5L', reason: 'Your average is 1.6L/day. Adding 900ml would hit your target consistently.', action: 'Drink one extra glass of water with each meal', createdAt: new Date().toISOString(), applied: false },
-          { id: `c-${now}-5`, category: 'recovery', recommendation: 'Add one full rest day', reason: 'You trained 6 of the last 7 days. Muscle grows during rest, not training.', action: 'Take tomorrow off — light walking only', createdAt: new Date().toISOString(), applied: false },
-        ];
-        set({ weeklyPlan: plan, aiHistory: [...plan, ...get().aiHistory].slice(0, 50) });
+      generateWeeklyPlan: async () => {
+        if (!get().aiEnabled) return;
+
+        const dates = Array.from({ length: 7 }, (_, index) => {
+          const date = new Date();
+          date.setDate(date.getDate() - index);
+          return date.toISOString().slice(0, 10);
+        });
+        const diary = useDiaryStore.getState();
+        const water = useWaterStore.getState();
+        const workouts = useWorkoutStore.getState().history;
+        const fasting = useFastingStore.getState().history;
+        const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        const averageCalories = Math.round(
+          dates.reduce((sum, date) => sum + diary.getDailyCalories(date), 0) / dates.length,
+        );
+        const context = {
+          periodDays: 7,
+          averageCalories,
+          waterTargetMl: 2000,
+          waterByDate: dates.map((date) => water.waterMl[date] || 0),
+          workoutsCompleted: workouts.filter((workout) => new Date(workout.endTime).getTime() >= cutoff).length,
+          fastingSessions: fasting.filter((session) => new Date(session.startTime).getTime() >= cutoff).length,
+          diaryEntries: diary.entries.filter((entry) => dates.includes(entry.date)).length,
+        };
+
+        try {
+          const result = await generateCoaching(context);
+          const createdAt = result.generatedAt || new Date().toISOString();
+          const plan: CoachRecommendation[] = result.recommendations.map((recommendation, index) => ({
+            id: `c-${Date.now()}-${index + 1}`,
+            category: recommendation.category,
+            recommendation: recommendation.recommendation,
+            reason: recommendation.reason,
+            action: recommendation.recommendation,
+            createdAt,
+            applied: false,
+          }));
+          set({ weeklyPlan: plan, aiHistory: [...plan, ...get().aiHistory].slice(0, 50) });
+        } catch {
+          // Keep the last usable plan when the AI service is unavailable.
+        }
       },
       applyRecommendation: (id) => set((s) => ({
         weeklyPlan: s.weeklyPlan.map((r) => r.id === id ? { ...r, applied: true } : r),

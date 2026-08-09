@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Appearance } from 'react-native';
 import { COLORS as LIGHT_COLORS } from '@/src/constants/theme';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
@@ -90,9 +93,10 @@ interface ThemeState {
   colors: ThemeColors;
   setMode: (mode: ThemeMode) => void;
   setSystemDark: (isDark: boolean) => void;
+  initializeSystemAppearance: () => () => void;
 }
 
-export const useThemeStore = create<ThemeState>((set) => ({
+export const useThemeStore = create<ThemeState>()(persist((set) => ({
   mode: 'system',
   isDark: false,
   colors: LIGHT_THEME,
@@ -106,6 +110,30 @@ export const useThemeStore = create<ThemeState>((set) => ({
     }
     return { isDark };
   }),
+  initializeSystemAppearance: () => {
+    const colorScheme = Appearance.getColorScheme();
+    set((state) => {
+      if (state.mode !== 'system') return state;
+      const isDark = colorScheme === 'dark';
+      return { isDark, colors: isDark ? DARK_THEME : LIGHT_THEME };
+    });
+    const subscription = Appearance.addChangeListener(({ colorScheme: nextScheme }) => {
+      useThemeStore.getState().setSystemDark(nextScheme === 'dark');
+    });
+    return () => subscription.remove();
+  },
+}), {
+  name: 'theme-storage',
+  storage: createJSONStorage(() => AsyncStorage),
+  partialize: (state) => ({ mode: state.mode, isDark: state.isDark }),
+  merge: (persisted, current) => {
+    const saved = persisted as Partial<Pick<ThemeState, 'mode' | 'isDark'>>;
+    return {
+      ...current,
+      ...saved,
+      colors: saved.isDark ? DARK_THEME : LIGHT_THEME,
+    };
+  },
 }));
 
 export function useThemeColors(): ThemeColors {

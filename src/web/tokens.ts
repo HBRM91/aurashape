@@ -86,4 +86,24 @@ export const WEB_TOKENS = {
   },
 } as const;
 
+const WEB_DARK_COLORS = {
+  primary: '#6EE7A8',
+  primaryStrong: '#A7F3C5',
+  secondary: '#173B2A',
+  page: '#0F1914',
+  surface: '#17231C',
+  surfaceMuted: '#223329',
+  text: '#F0FDF4',
+  textMuted: '#A7B8AE',
+  border: '#355342',
+  focus: '#86EFAC',
+  error: '#FDA4AF',
+  errorSurface: '#3B1D24',
+  errorBorder: '#7F1D32',
+} as const;
+
+export function getWebTokens(isDark: boolean) {
+  return isDark ? { ...WEB_TOKENS, colors: WEB_DARK_COLORS } : WEB_TOKENS;
+}
+
 export type WebButtonVariant = 'primary' | 'secondary' | 'ghost';

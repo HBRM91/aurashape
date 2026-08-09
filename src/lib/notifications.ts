@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { supabase } from './supabase';
+import { isLocalOnly } from './privacyMode';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -23,6 +24,7 @@ export const NOTIFICATION_CHANNELS = {
 } as const;
 
 export async function initPushNotifications(): Promise<string | null> {
+  if (isLocalOnly()) return null;
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();
     let finalStatus = existing;
@@ -61,6 +63,7 @@ export async function initPushNotifications(): Promise<string | null> {
 }
 
 export async function savePushToken(userId: string, token: string) {
+  if (isLocalOnly()) return;
   try {
     await supabase.from('profiles').update({ expo_push_token: token }).eq('id', userId);
   } catch {}

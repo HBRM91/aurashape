@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     gap: WEB_TOKENS.spacing.md,
   },
   dayCard: {
-    width: '100%',
+    width: '48%',
     gap: WEB_TOKENS.spacing.sm,
   },
   todayCard: {

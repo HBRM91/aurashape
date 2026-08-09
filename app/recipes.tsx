@@ -1,4 +1,6 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
+import { WebAppShell } from '@/src/web/WebAppShell';
+import { WebRecipes } from '@/src/web/screens/WebRecipes';
 import { RECIPES, recipeToFood, type Recipe } from '@/src/lib/recipes';
 import { useRecipeStore } from '@/src/stores/recipes';
 import { useDiaryStore } from '@/src/stores/diary';
@@ -228,6 +230,7 @@ function RecipeDetail({ recipe, onClose, colors }: { recipe: Recipe; onClose: ()
 }
 
 export default function RecipesScreen() {
+  if (Platform.OS === 'web') return <WebAppShell title="Recipes"><WebRecipes /></WebAppShell>;
   const colors = useThemeColors();
   const [selectedCategory, setSelectedCategory] = useState<Recipe['category'] | 'all'>('all');
   const [selectedDiet, setSelectedDiet] = useState<DietaryPreference | 'all'>('all');

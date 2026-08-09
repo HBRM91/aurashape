@@ -1,5 +1,6 @@
 const mockGetSession = jest.fn();
 const mockOnAuthStateChange = jest.fn();
+const mockSignUp = jest.fn();
 let authStateCallback: ((event: string, session: unknown) => void) | undefined;
 
 jest.mock('@/src/lib/supabase', () => ({
@@ -7,6 +8,7 @@ jest.mock('@/src/lib/supabase', () => ({
     auth: {
       getSession: mockGetSession,
       onAuthStateChange: mockOnAuthStateChange,
+      signUp: mockSignUp,
     },
   },
   AUTH_REDIRECT_URL: 'aurashape://auth/callback',
@@ -16,8 +18,10 @@ import { useAuthStore } from '@/src/stores/auth';
 
 describe('auth initialization', () => {
   beforeEach(() => {
+    process.env.EXPO_PUBLIC_DATA_MODE = 'cloud';
     mockGetSession.mockReset();
     mockOnAuthStateChange.mockReset();
+    mockSignUp.mockReset();
     authStateCallback = undefined;
     useAuthStore.setState({
       session: null,
@@ -26,6 +30,10 @@ describe('auth initialization', () => {
       initialized: false,
       authError: null,
     });
+  });
+
+  afterAll(() => {
+    delete process.env.EXPO_PUBLIC_DATA_MODE;
   });
 
   it('settles initialized state and retains a visible error when session loading fails', async () => {
@@ -60,5 +68,13 @@ describe('auth initialization', () => {
       user: { id: 'user-1' },
       authError: null,
     }));
+  });
+
+  it('reports when signup requires email confirmation', async () => {
+    mockSignUp.mockResolvedValueOnce({ data: { user: { id: 'user-1' }, session: null }, error: null });
+
+    const result = await useAuthStore.getState().signUp('person@example.com', 'Password1');
+
+    expect(result).toEqual({ needsEmailConfirmation: true });
   });
 });

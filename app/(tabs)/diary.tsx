@@ -16,6 +16,7 @@ import type { MealSlot, DietaryPreference } from '@/src/types';
 import { Copy, CookingPot } from 'phosphor-react-native';
 import { WebDiary } from '@/src/web/screens/WebDiary';
 import { FoodCapture } from '@/src/web/FoodCapture';
+import { getNutritionTargets } from '@/src/lib/nutritionTargets';
 
 function yesterdayStr(): string {
   const d = new Date();
@@ -40,10 +41,7 @@ export default function DiaryScreen() {
   const [showFoodCapture, setShowFoodCapture] = useState(false);
 
   const onboarding = useOnboardingStore();
-  const calorieTarget = onboarding.calorieTarget || 2000;
-  const proteinTarget = onboarding.proteinTargetG || 100;
-  const carbsTarget = onboarding.carbsTargetG || 200;
-  const fatTarget = onboarding.fatTargetG || 55;
+  const { calorieTarget, proteinTargetG: proteinTarget, carbsTargetG: carbsTarget, fatTargetG: fatTarget } = getNutritionTargets(onboarding);
 
   const consumed = getDailyCalories(selectedDate);
   const macros = getDailyMacros(selectedDate);
@@ -171,7 +169,7 @@ export default function DiaryScreen() {
 
         {consumed > 0 && (
           <TouchableOpacity
-            onPress={() => router.push('/summary' as any)}
+            onPress={() => router.push({ pathname: '/summary', params: { date: selectedDate } } as any)}
             className="mx-4 mb-6 py-3 rounded-xl items-center"
             style={{ backgroundColor: '#3B82F6' + '10' }}
           >

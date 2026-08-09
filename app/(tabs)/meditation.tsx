@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useThemeColors } from '@/src/stores/theme';
 import { useMeditationStore } from '@/src/stores/meditation';
 import { trackScreen } from '@/src/lib/analytics';
@@ -17,6 +17,7 @@ import {
   Wind,
   CalendarBlank,
 } from 'phosphor-react-native';
+import { WebMeditation } from '@/src/web/screens/WebMeditation';
 
 const RING_SIZE = 200;
 const STROKE_WIDTH = 12;
@@ -42,6 +43,7 @@ function formatTime(totalSeconds: number): string {
 }
 
 export default function MeditationScreen() {
+  if (Platform.OS === 'web') return <WebMeditation />;
   useEffect(() => { trackScreen('meditation'); }, []);
   const colors = useThemeColors();
   const { sessions, addSession, getWeeklyMinutes, streak, breathingPatterns } = useMeditationStore();

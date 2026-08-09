@@ -1,13 +1,14 @@
 import { useAuthStore } from '@/src/stores/auth';
 import { COLORS } from '@/src/constants/theme';
-import { Link } from 'expo-router';
-import { useState } from 'react';
+import { Link, router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import { GoogleLogo, AppleLogo } from 'phosphor-react-native';
 import { AuthFrame } from '@/src/web/AuthFrame';
 import { WebButton } from '@/src/web/WebButton';
 import { WebField } from '@/src/web/WebField';
 import { WEB_TOKENS } from '@/src/web/tokens';
+import { isLocalOnly } from '@/src/lib/privacyMode';
 
 export default function LoginScreen() {
   const { signIn, signInWithGoogle, signInWithApple } = useAuthStore();
@@ -18,7 +19,11 @@ export default function LoginScreen() {
   const [oauthProvider, setOAuthProvider] = useState<'google' | 'apple' | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<'email' | 'password', string>>>({});
   const { width } = useWindowDimensions();
-  const isNarrowWeb = Platform.OS === 'web' && width > 0 && width < 480;
+  const [isNarrowWeb, setIsNarrowWeb] = useState(false);
+
+  useEffect(() => {
+    setIsNarrowWeb(Platform.OS === 'web' && width > 0 && width < 480);
+  }, [width]);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -61,6 +66,13 @@ export default function LoginScreen() {
       <AuthFrame heading="Welcome back" subtitle="Log in to continue your journey">
         <View style={styles.webForm}>
           {error ? <Text accessibilityLiveRegion="polite" style={styles.formError}>{error}</Text> : null}
+          {isLocalOnly() && (
+            <View style={styles.localNotice}>
+              <Text style={styles.localNoticeTitle}>Local-only mode</Text>
+              <Text style={styles.localNoticeText}>No account, analytics, or health data transmission is required.</Text>
+              <WebButton label="Continue locally" onPress={() => router.replace('/diary')} variant="secondary" />
+            </View>
+          )}
           <WebField
             autoCapitalize="none"
             autoComplete="email"
@@ -236,6 +248,16 @@ const styles = StyleSheet.create({
     color: WEB_TOKENS.colors.error,
     padding: WEB_TOKENS.spacing.sm,
   },
+  localNotice: {
+    backgroundColor: WEB_TOKENS.colors.secondary,
+    borderColor: WEB_TOKENS.colors.border,
+    borderRadius: WEB_TOKENS.radii.sm,
+    borderWidth: 1,
+    gap: WEB_TOKENS.spacing.xs,
+    padding: WEB_TOKENS.spacing.md,
+  },
+  localNoticeTitle: { ...WEB_TOKENS.typography.label, color: WEB_TOKENS.colors.primaryStrong },
+  localNoticeText: { ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.textMuted },
   submitButton: {
     marginTop: WEB_TOKENS.spacing.sm,
     width: '100%',

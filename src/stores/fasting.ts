@@ -26,6 +26,7 @@ interface FastingState {
 }
 
 const PLAN_HOURS: Record<FastingPlan, number> = {
+  '12:12': 12,
   '14:10': 14,
   '16:8': 16,
   '18:6': 18,

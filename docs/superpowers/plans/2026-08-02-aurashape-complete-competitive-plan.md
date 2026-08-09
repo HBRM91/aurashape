@@ -385,6 +385,85 @@ The web screens already exist (400-800 lines each) and are functional. These tas
 
 ---
 
+## Task Difficulty Analysis and Model Allocation
+
+### Difficulty Dimensions
+
+| Dimension | What It Measures |
+|-----------|-----------------|
+| **Code Volume** | Lines of new code to write |
+| **Files Touched** | Number of files needing coordinated changes |
+| **Architecture** | Design decisions the model must make |
+| **Domain Knowledge** | Specialized knowledge needed (APIs, SVG, service workers, prompt engineering) |
+| **Cross-System** | Number of systems that must integrate (edge functions ↔ client ↔ stores ↔ Supabase) |
+| **Testing** | Complexity of writing meaningful tests |
+| **Bug Risk** | Likelihood of subtle, hard-to-find bugs |
+| **Creativity** | Novel problem-solving vs following clear patterns |
+
+### Ratings (1-5 scale)
+
+| Task | Description | Code | Files | Arch | Domain | Cross | Test | Risk | Creativity | **Total** | **Model** |
+|------|-------------|------|-------|------|--------|-------|------|------|------------|-----------|-----------|
+| **7A** | Fix Learn shell integration | 1 | 2 | 1 | 1 | 1 | 2 | 1 | 1 | **10** | **Flash** |
+| **10** | Upgrade dashboard with trends/coach | 2 | 3 | 2 | 2 (SVG) | 2 | 2 | 1 | 2 | **16** | **Flash** |
+| **19** | Deploy and verify Cloudflare Pages | 1 | 3 | 2 | 2 (CI/CD) | 2 | 1 | 2 | 1 | **13** | **Flash** |
+| **9** | Add web onboarding flow | 3 | 6 | 3 | 2 | 2 | 3 | 2 | 2 | **21** | **V4 Pro** |
+| **15** | Add progress intelligence | 3 | 4 | 3 | 3 (SVG charts, correlation math) | 3 | 3 | 2 | 3 | **24** | **V4 Pro** |
+| **17** | Optimize web performance | 2 | 4 | 3 | 3 (lazy loading, bundle analysis) | 2 | 2 | 2 | 2 | **19** | **V4 Pro** |
+| **18** | Add Playwright browser tests | 2 | 5 | 3 | 3 (Playwright config, mocking) | 2 | 2 | 2 | 2 | **21** | **V4 Pro** |
+| **16** | Add basic PWA support | 2 | 4 | 3 | 4 (service workers, offline sync) | 3 | 3 | 3 | 2 | **24** | **V4 Pro** |
+| **14** | Add workout intelligence | 3 | 4 | 3 | 3 (audio, SVG, adaptation logic) | 3 | 3 | 2 | 3 | **24** | **V4 Pro** |
+| **8** | Add web food search + barcode | 3 | 5 | 4 | 3 (API integration, debounce, state) | 3 | 3 | 3 | 3 | **27** | **Luna** |
+| **13** | Build meal planning workflow | 4 | 4 | 4 | 3 (calendar grid, aggregation) | 3 | 3 | 3 | 3 | **27** | **Luna** |
+| **11** | Wire OpenAI into food analysis | 3 | 5 | 4 | 5 (OpenAI API, vision, prompt engineering, safety filtering) | 4 | 4 | 4 | 4 | **36** | **Luna** |
+| **12** | Wire OpenAI into reading/coaching | 3 | 5 | 4 | 5 (evidence grading, citation validation, rate limiting) | 4 | 4 | 4 | 4 | **36** | **Luna** |
+
+### Model Allocation Summary
+
+#### DeepSeek 4 Flash (3 tasks) — Routine, pattern-following work
+| Task | Why It's Simple |
+|------|----------------|
+| **7A** | Wrap existing component in existing shell. One clear pattern to follow. PowerShell assertion update. |
+| **10** | Add SVG cards to existing dashboard. Existing `MetricCard`/`ScienceTipCard` patterns to copy. |
+| **19** | Run build, deploy to Pages, verify HTTP responses. Operational steps, no creative code. |
+
+#### DeepSeek V4 Pro (7 tasks) — Medium complexity, established patterns
+| Task | Key Challenge |
+|------|--------------|
+| **9** | Multi-step wizard but all store fields and steps already defined in native. Model follows existing onboarding structure. |
+| **15** | SVG charts and trend math. Straightforward algorithms (moving average, linear extrapolation) applied to existing data. |
+| **17** | `React.lazy()` + `Suspense` is well-documented. Lighthouse optimization is iterative measurement. |
+| **18** | Playwright setup is boilerplate-heavy. Tests follow clear patterns (load page, assert elements, check responses). |
+| **16** | Service worker is mostly boilerplate. The offline sync part uses existing `syncStore` — no new architecture. |
+| **14** | Rest timer is a countdown component. SVG chart follows the same pattern as weight chart. Adaptation logic is simple conditionals. |
+| **13** | 7-day calendar grid is complex layout but follows existing recipe/meal plan store API. Grocery aggregation is groupBy logic. |
+
+#### ChatGPT 5.6 Luna (3 tasks) — High complexity, creative problem-solving
+| Task | Why It Needs a Frontier Model |
+|------|------------------------------|
+| **8** | 3 new interconnected components. Must understand Open Food Facts API, debounce patterns, favorites persistence, barcode lookup, meal slot selection flow. Many small UX decisions (search result layout, loading states, empty states, error handling). Cross-component state management. |
+| **11** | OpenAI API integration with vision. Prompt engineering for structured food analysis output. Response parsing and validation. Safety filtering for medical claims. Error handling for API failures. Rate limiting. All in Deno (Supabase Edge Functions) which has fewer examples than Node. |
+| **12** | Two edge functions (reading + coaching). Evidence grading prompt design. Citation URL validation. Rate limiting per user. Coach data aggregation across 5+ stores. "Why this?" explanation generation. Most complex cross-system integration in the plan. |
+
+### Parallelization Strategy
+
+```
+Week 1 (parallel):  Flash: 7A, 10     |  V4 Pro: 9, 17     |  Luna: 8
+Week 2 (parallel):  Flash: 19         |  V4 Pro: 15, 14     |  Luna: 11
+Week 3 (parallel):  —                 |  V4 Pro: 13, 16     |  Luna: 12
+Week 4 (sequential): V4 Pro: 18       |  Final review + deploy (19)
+```
+
+**Critical path:** 8 → 11 → 12 (food search must exist before AI food analysis can be wired in, reading/coaching depends on same edge function infrastructure).
+
+**Independent tracks:**
+- Track A (Luna): 8 → 11 → 12 (AI pipeline)
+- Track B (V4 Pro): 9 → 15 → 14 → 13 (feature screens)
+- Track C (Flash): 7A → 10 (quick wins)
+- Track D (V4 Pro): 16, 17, 18 (infrastructure, can start anytime)
+
+---
+
 ## Execution Order
 
 ```

@@ -18,7 +18,9 @@ import { WebButton } from '../WebButton';
 import { FoodSearchSheet } from '../FoodSearchSheet';
 import { BarcodeLookupSheet } from '../BarcodeLookupSheet';
 import { QuickAddSheet } from '../QuickAddSheet';
+import { MealPlanner } from '../MealPlanner';
 import { WEB_TOKENS } from '../tokens';
+import { getNutritionTargets } from '@/src/lib/nutritionTargets';
 
 const SLOTS: { slot: MealSlot; label: string; emoji: string }[] = [
   { slot: 'breakfast', label: 'Breakfast', emoji: '🌅' },
@@ -47,11 +49,9 @@ export function WebDiary() {
   const [showBarcode, setShowBarcode] = useState(false);
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [view, setView] = useState<'diary' | 'plan'>('diary');
 
-  const calorieTarget = onboarding.calorieTarget || 2000;
-  const proteinTarget = onboarding.proteinTargetG || 100;
-  const carbsTarget = onboarding.carbsTargetG || 200;
-  const fatTarget = onboarding.fatTargetG || 55;
+  const { calorieTarget, proteinTargetG: proteinTarget, carbsTargetG: carbsTarget, fatTargetG: fatTarget } = getNutritionTargets(onboarding);
 
   const consumed = getDailyCalories(selectedDate);
   const macros = getDailyMacros(selectedDate);
@@ -198,7 +198,7 @@ export function WebDiary() {
         <Text style={styles.cardTitle}>Quick Actions</Text>
         <View style={styles.quickActions}>
           <WebButton label="Scan Barcode" variant="secondary" onPress={handleBarcodeOpen} />
-          <WebButton label="View Summary" variant="ghost" onPress={() => router.push('/summary' as any)} />
+          <WebButton label="View Summary" variant="ghost" onPress={() => router.push({ pathname: '/summary', params: { date: selectedDate } } as any)} />
         </View>
       </WebCard>
 
@@ -232,25 +232,49 @@ export function WebDiary() {
   return (
     <View style={styles.page}>
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Food Diary</Text>
-        <Text style={styles.dateText}>{selectedDate}</Text>
-      </View>
-      <ScrollView style={styles.scroll}>
-        <View style={isDesktop ? styles.desktopGrid : styles.mobileStack}>
-          {isDesktop ? (
-            <>
-              {leftColumn}
-              {rightColumn}
-            </>
-          ) : (
-            <>
-              {rightColumn}
-              {leftColumn}
-            </>
-          )}
+        <View style={styles.headerCopy}>
+          <Text style={styles.pageTitle}>{view === 'diary' ? 'Food Diary' : 'Meal Plan'}</Text>
+          <Text style={styles.dateText}>{selectedDate}</Text>
         </View>
-        <View style={{ height: WEB_TOKENS.spacing.xxl }} />
-      </ScrollView>
+        <View style={styles.viewToggle}>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ selected: view === 'diary' }}
+            onPress={() => setView('diary')}
+            style={[styles.viewButton, view === 'diary' && styles.viewButtonActive]}
+          >
+            <Text style={[styles.viewButtonText, view === 'diary' && styles.viewButtonTextActive]}>Diary</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityState={{ selected: view === 'plan' }}
+            onPress={() => setView('plan')}
+            style={[styles.viewButton, view === 'plan' && styles.viewButtonActive]}
+          >
+            <Text style={[styles.viewButtonText, view === 'plan' && styles.viewButtonTextActive]}>Meal plan</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+      {view === 'plan' ? (
+        <MealPlanner startDate={selectedDate} />
+      ) : (
+        <ScrollView style={styles.scroll}>
+          <View style={isDesktop ? styles.desktopGrid : styles.mobileStack}>
+            {isDesktop ? (
+              <>
+                {leftColumn}
+                {rightColumn}
+              </>
+            ) : (
+              <>
+                {rightColumn}
+                {leftColumn}
+              </>
+            )}
+          </View>
+          <View style={{ height: WEB_TOKENS.spacing.xxl }} />
+        </ScrollView>
+      )}
 
       {showFoodSearch && (
         <FoodSearchSheet
@@ -283,10 +307,14 @@ const styles = StyleSheet.create({
     backgroundColor: WEB_TOKENS.colors.page,
   },
   header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingHorizontal: WEB_TOKENS.spacing.lg,
     paddingTop: WEB_TOKENS.spacing.xl,
     paddingBottom: WEB_TOKENS.spacing.md,
   },
+  headerCopy: { flex: 1 },
   pageTitle: {
     ...WEB_TOKENS.typography.heading,
     color: WEB_TOKENS.colors.text,
@@ -296,6 +324,20 @@ const styles = StyleSheet.create({
     color: WEB_TOKENS.colors.textMuted,
     marginTop: 4,
   },
+  viewToggle: {
+    backgroundColor: WEB_TOKENS.colors.surfaceMuted,
+    borderRadius: WEB_TOKENS.radii.pill,
+    flexDirection: 'row',
+    padding: 3,
+  },
+  viewButton: {
+    borderRadius: WEB_TOKENS.radii.pill,
+    paddingHorizontal: WEB_TOKENS.spacing.sm,
+    paddingVertical: WEB_TOKENS.spacing.xs,
+  },
+  viewButtonActive: { backgroundColor: WEB_TOKENS.colors.primary },
+  viewButtonText: { ...WEB_TOKENS.typography.label, color: WEB_TOKENS.colors.textMuted, fontSize: 12 },
+  viewButtonTextActive: { color: WEB_TOKENS.colors.surface },
   scroll: {
     flex: 1,
   },

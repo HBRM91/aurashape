@@ -17,6 +17,7 @@ export const NAV_ITEMS: WebNavItem[] = [
   { route: '/articles', path: '/articles', label: 'Learn', icon: '📚' },
   { route: '/(tabs)/community', path: '/community', label: 'Community', icon: '👥' },
   { route: '/(tabs)/profile', path: '/profile', label: 'Profile', icon: '👤' },
+  { route: '/(tabs)/organization', path: '/organization', label: 'Organization', icon: '🏢' },
 ];
 
 export function isNavItemActive(pathname: string, item: WebNavItem): boolean {

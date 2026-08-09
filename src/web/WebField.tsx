@@ -7,7 +7,8 @@ import {
   type TextInputProps,
   type TextStyle,
 } from 'react-native';
-import { WEB_TOKENS } from './tokens';
+import { getWebTokens, WEB_TOKENS } from './tokens';
+import { useIsDark } from '@/src/stores/theme';
 
 export interface WebFieldProps extends TextInputProps {
   label: string;
@@ -24,6 +25,7 @@ export function WebField({
   onBlur,
   ...props
 }: WebFieldProps) {
+  const tokens = getWebTokens(useIsDark());
   const [focused, setFocused] = useState(false);
   const errorId = `${nativeID ?? `web-field-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}-error`;
   const handleFocus: TextInputProps['onFocus'] = (event) => {
@@ -37,7 +39,7 @@ export function WebField({
 
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: tokens.colors.text }]}>{label}</Text>
       <TextInput
         {...props}
         {...{ 'aria-invalid': Boolean(error) }}
@@ -46,11 +48,11 @@ export function WebField({
         nativeID={nativeID}
         onBlur={handleBlur}
         onFocus={handleFocus}
-        placeholderTextColor={props.placeholderTextColor ?? WEB_TOKENS.colors.textMuted}
-        style={[styles.input, focused ? styles.focused : undefined, error ? styles.errorInput : undefined, style]}
+        placeholderTextColor={props.placeholderTextColor ?? tokens.colors.textMuted}
+        style={[styles.input, { backgroundColor: tokens.colors.surface, borderColor: tokens.colors.border, color: tokens.colors.text }, focused ? [styles.focused, { borderColor: tokens.colors.focus }] : undefined, error ? [styles.errorInput, { borderColor: tokens.colors.error }] : undefined, style]}
       />
       {error ? (
-        <Text accessibilityLiveRegion="polite" nativeID={errorId} style={styles.error}>
+        <Text accessibilityLiveRegion="polite" nativeID={errorId} style={[styles.error, { color: tokens.colors.error }]}>
           {error}
         </Text>
       ) : null}

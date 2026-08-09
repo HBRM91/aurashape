@@ -11,7 +11,8 @@ import { useFastingStore } from '@/src/stores/fasting';
 import type { FastingPlan } from '@/src/types';
 import { WebCard } from '../WebCard';
 import { WebButton } from '../WebButton';
-import { WEB_TOKENS } from '../tokens';
+import { getWebTokens, WEB_TOKENS } from '../tokens';
+import { useIsDark } from '@/src/stores/theme';
 
 const PLAN_OPTIONS: { value: FastingPlan; label: string; hours: number; difficulty: string }[] = [
   { value: '14:10', label: '14:10', hours: 14, difficulty: 'Beginner' },
@@ -37,6 +38,7 @@ export function WebFasting() {
 
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
+  const tokens = getWebTokens(useIsDark());
 
   const {
     currentPlan,
@@ -189,9 +191,9 @@ export function WebFasting() {
   );
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { backgroundColor: tokens.colors.page }]}>
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Fasting Tracker</Text>
+        <Text style={[styles.pageTitle, { color: tokens.colors.text }]}>Fasting Tracker</Text>
       </View>
       <ScrollView style={styles.scroll}>
         <View style={isDesktop ? styles.desktopGrid : styles.mobileStack}>

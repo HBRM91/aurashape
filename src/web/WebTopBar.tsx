@@ -1,7 +1,8 @@
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { WEB_TOKENS } from './tokens';
+import { getWebTokens, WEB_TOKENS } from './tokens';
 import { useAuthStore } from '@/src/stores/auth';
+import { useIsDark } from '@/src/stores/theme';
 
 export interface WebTopBarProps {
   title?: string;
@@ -11,6 +12,7 @@ export function WebTopBar({ title }: WebTopBarProps) {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
   const user = useAuthStore((s) => s.user);
+  const tokens = getWebTokens(useIsDark());
   const router = useRouter();
 
   if (Platform.OS !== 'web' || !isDesktop) {
@@ -25,8 +27,8 @@ export function WebTopBar({ title }: WebTopBarProps) {
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <View style={styles.topBar}>
-      <Text style={styles.title}>{title ?? ''}</Text>
+    <View style={[styles.topBar, { backgroundColor: tokens.colors.surface, borderBottomColor: tokens.colors.border }]}>
+      <Text style={[styles.title, { color: tokens.colors.text }]}>{title ?? ''}</Text>
 
       <Pressable
         accessibilityLabel="Open profile"
@@ -37,7 +39,7 @@ export function WebTopBar({ title }: WebTopBarProps) {
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
-        <Text style={styles.userName}>{displayName}</Text>
+        <Text style={[styles.userName, { color: tokens.colors.text }]}>{displayName}</Text>
       </Pressable>
     </View>
   );

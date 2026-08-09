@@ -1,10 +1,13 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, Platform } from 'react-native';
+import { Redirect } from 'expo-router';
 import { useCycleStore } from '@/src/stores/cycle';
 import { useThemeColors } from '@/src/stores/theme';
 import { useEffect, useState } from 'react';
 import { trackScreen } from '@/src/lib/analytics';
 import type { SymptomType, FlowLevel } from '@/src/types';
 import { Drop, Calendar, Warning, Trash } from 'phosphor-react-native';
+import { useOnboardingStore } from '@/src/stores/onboarding';
+import { WebCycle } from '@/src/web/screens/WebCycle';
 
 const SYMPTOM_OPTIONS: { value: SymptomType; label: string; emoji: string }[] = [
   { value: 'cramps', label: 'Cramps', emoji: '😖' },
@@ -35,6 +38,9 @@ const PHASE_INFO: Record<string, { label: string; color: string; emoji: string }
 };
 
 export default function CycleScreen() {
+  const sex = useOnboardingStore((s) => s.sex);
+  if (sex === 'male') return <Redirect href="/(tabs)/progress" />;
+  if (Platform.OS === 'web') return <WebCycle />;
   useEffect(() => { trackScreen('cycle'); }, []);
   const colors = useThemeColors();
   const {

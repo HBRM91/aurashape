@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -30,27 +30,32 @@ export function AddFoodSheet({ visible, slot, onClose, onBarcodeScan, onManualAd
   const [results, setResults] = useState<Food[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const requestIdRef = useRef(0);
   const { addEntry, recentFoods } = useDiaryStore();
 
   if (!visible || !slot) return null;
 
   const handleSearch = async (text: string) => {
+    const requestId = ++requestIdRef.current;
     setQuery(text);
     if (text.length < 2) {
       setResults([]);
       setSearched(false);
+      setLoading(false);
       return;
     }
     setLoading(true);
     try {
       const foods = await searchFoods(text);
+      if (requestId !== requestIdRef.current) return;
       setResults(foods);
       setSearched(true);
     } catch {
+      if (requestId !== requestIdRef.current) return;
       setResults([]);
       setSearched(true);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   };
 

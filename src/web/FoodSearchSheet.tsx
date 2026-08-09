@@ -24,20 +24,27 @@ export function FoodSearchSheet({ onSelect, onClose }: FoodSearchSheetProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestIdRef = useRef(0);
 
   const recentFoods = useDiaryStore((s) => s.recentFoods);
+  const favoriteFoods = useDiaryStore((s) => s.favoriteFoods);
+  const isFavoriteFood = useDiaryStore((s) => s.isFavoriteFood);
+  const toggleFavoriteFood = useDiaryStore((s) => s.toggleFavoriteFood);
 
   const doSearch = useCallback(async (term: string) => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(false);
     try {
       const foods = await searchFoods(term);
+      if (requestId !== requestIdRef.current) return;
       setResults(foods);
     } catch {
+      if (requestId !== requestIdRef.current) return;
       setError(true);
       setResults([]);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, []);
 
@@ -62,6 +69,7 @@ export function FoodSearchSheet({ onSelect, onClose }: FoodSearchSheetProps) {
   }, [query, doSearch]);
 
   const displayedFoods = query.trim().length >= 2 ? results : recentFoods;
+  const recentOnlyFoods = recentFoods.filter((food) => !isFavoriteFood(food.id));
 
   return (
     <View style={styles.overlay}>
@@ -91,6 +99,14 @@ export function FoodSearchSheet({ onSelect, onClose }: FoodSearchSheetProps) {
           ) : error ? (
             <View style={styles.centered}>
               <Text style={styles.stateText}>Could not search. Try again.</Text>
+              <TouchableOpacity
+                accessibilityLabel="Retry search"
+                accessibilityRole="button"
+                onPress={() => doSearch(query.trim())}
+                style={styles.retryButton}
+              >
+                <Text style={styles.retryText}>Retry search</Text>
+              </TouchableOpacity>
             </View>
           ) : displayedFoods.length === 0 ? (
             <View style={styles.centered}>
@@ -100,26 +116,16 @@ export function FoodSearchSheet({ onSelect, onClose }: FoodSearchSheetProps) {
             </View>
           ) : (
             <>
-              {query.trim().length < 2 && recentFoods.length > 0 && (
+              {query.trim().length < 2 && favoriteFoods.length > 0 && (
+                <>
+                  <Text style={styles.sectionTitle}>Favorites</Text>
+                  {favoriteFoods.map(renderFood)}
+                </>
+              )}
+              {query.trim().length < 2 && recentOnlyFoods.length > 0 && (
                 <Text style={styles.sectionTitle}>Recent</Text>
               )}
-              {displayedFoods.map((food) => (
-                <TouchableOpacity
-                  key={food.id}
-                  style={styles.resultCard}
-                  onPress={() => onSelect(food)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select ${food.name}`}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.foodName} numberOfLines={1}>{food.name}</Text>
-                    <Text style={styles.foodBrand} numberOfLines={1}>
-                      {food.brand || food.serving_name}
-                    </Text>
-                  </View>
-                  <Text style={styles.foodCal}>{Math.round(food.calories_per_serving)} cal</Text>
-                </TouchableOpacity>
-              ))}
+              {(query.trim().length < 2 ? recentOnlyFoods : displayedFoods).map(renderFood)}
             </>
           )}
           <View style={{ height: WEB_TOKENS.spacing.md }} />
@@ -127,6 +133,40 @@ export function FoodSearchSheet({ onSelect, onClose }: FoodSearchSheetProps) {
       </View>
     </View>
   );
+
+  function renderFood(food: Food) {
+    const favorite = isFavoriteFood(food.id);
+
+    return (
+      <View key={food.id} style={styles.resultCard}>
+        <TouchableOpacity
+          style={styles.foodSelect}
+          onPress={() => onSelect(food)}
+          accessibilityRole="button"
+          accessibilityLabel={`Select ${food.name}`}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={styles.foodName} numberOfLines={1}>{food.name}</Text>
+            <Text style={styles.foodBrand} numberOfLines={1}>
+              {food.brand || food.serving_name}
+            </Text>
+          </View>
+          <Text style={styles.foodCal}>{Math.round(food.calories_per_serving)} cal</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.favoriteButton}
+          onPress={() => toggleFavoriteFood(food)}
+          accessibilityRole="button"
+          accessibilityLabel={favorite ? `Remove ${food.name} from favorites` : `Favorite ${food.name}`}
+          accessibilityState={{ selected: favorite }}
+        >
+          <Text style={[styles.favoriteIcon, favorite && styles.favoriteIconActive]}>
+            {favorite ? '★' : '☆'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -183,6 +223,15 @@ const styles = StyleSheet.create({
     ...WEB_TOKENS.typography.caption,
     color: WEB_TOKENS.colors.textMuted,
   },
+  retryButton: {
+    marginTop: WEB_TOKENS.spacing.sm,
+    paddingHorizontal: WEB_TOKENS.spacing.md,
+    paddingVertical: WEB_TOKENS.spacing.xs,
+  },
+  retryText: {
+    ...WEB_TOKENS.typography.label,
+    color: WEB_TOKENS.colors.primary,
+  },
   sectionTitle: {
     ...WEB_TOKENS.typography.label,
     color: WEB_TOKENS.colors.textMuted,
@@ -191,10 +240,30 @@ const styles = StyleSheet.create({
   resultCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: WEB_TOKENS.colors.border,
     gap: WEB_TOKENS.spacing.sm,
+  },
+  foodSelect: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: WEB_TOKENS.spacing.sm,
+    paddingVertical: 4,
+  },
+  favoriteButton: {
+    minWidth: 40,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  favoriteIcon: {
+    fontSize: 22,
+    color: WEB_TOKENS.colors.textMuted,
+  },
+  favoriteIconActive: {
+    color: WEB_TOKENS.colors.primary,
   },
   foodName: {
     ...WEB_TOKENS.typography.caption,

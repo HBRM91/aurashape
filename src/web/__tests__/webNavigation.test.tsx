@@ -5,20 +5,22 @@ import { resolve } from 'node:path';
 
 const push = jest.fn();
 const setMode = jest.fn();
+let currentPathname = '/diary';
 
 jest.mock('expo-router', () => ({
-  usePathname: () => '/diary',
+  usePathname: () => currentPathname,
   useRouter: () => ({ push }),
 }));
 
 jest.mock('@/src/stores/theme', () => ({
   useThemeStore: (selector: (state: { mode: 'light'; setMode: typeof setMode }) => unknown) =>
     selector({ mode: 'light', setMode }),
+  useIsDark: () => false,
 }));
 
 import { WebMobileNav } from '../WebMobileNav';
 import { WebSidebar } from '../WebSidebar';
-import { NAV_ITEMS, isNavItemActive } from '../navItems';
+import { getActiveNavItem, NAV_ITEMS, isNavItemActive } from '../navItems';
 
 describe('web navigation', () => {
   const nativePlatform = Platform.OS;
@@ -34,6 +36,7 @@ describe('web navigation', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    currentPathname = '/diary';
   });
 
   afterEach(() => {
@@ -65,6 +68,11 @@ describe('web navigation', () => {
     expect(isNavItemActive('/diary', diary!)).toBe(true);
     expect(isNavItemActive('/diary/entry', diary!)).toBe(true);
     expect(isNavItemActive('/progress', diary!)).toBe(false);
+  });
+
+  it('resolves Learn and Diary from normalized browser paths', () => {
+    expect(getActiveNavItem('/articles')?.label).toBe('Learn');
+    expect(getActiveNavItem('/diary')?.label).toBe('Diary');
   });
 
   it('makes every desktop destination navigable and marks the current route active', async () => {
@@ -99,11 +107,37 @@ describe('web navigation', () => {
     });
 
     const { getByRole } = await render(<WebMobileNav />);
+    expect(getByRole('button', { name: 'More navigation options' }).props.accessibilityState).toEqual(
+      expect.objectContaining({ selected: false, expanded: false }),
+    );
     await fireEvent.press(getByRole('button', { name: 'More navigation options' }));
 
     for (const item of NAV_ITEMS) {
       expect(getByRole('button', { name: item.label })).toBeTruthy();
     }
+  });
+
+  it('selects More for a hidden active route', async () => {
+    dimensions = jest.spyOn(require('react-native'), 'useWindowDimensions').mockReturnValue({
+      width: 375,
+      height: 812,
+      scale: 1,
+      fontScale: 1,
+    });
+
+    currentPathname = '/community';
+    const hidden = await render(<WebMobileNav />);
+    expect(hidden.getByRole('button', { name: 'More navigation options' }).props.accessibilityState).toEqual(
+      expect.objectContaining({ selected: true, expanded: false }),
+    );
+  });
+
+  it('wraps the web Learn screen in the authenticated shell', () => {
+    const articles = readFileSync(resolve(__dirname, '../../../app/articles.tsx'), 'utf8');
+
+    expect(articles).toContain('if (Platform.OS === \'web\')');
+    expect(articles).toContain('<WebAppShell title="Learn">');
+    expect(articles).toContain('<WebLearn />');
   });
 
   it('uses Slot for web tab content while retaining the native Tabs branch', () => {

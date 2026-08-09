@@ -4,6 +4,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -13,6 +14,7 @@ import { WebButton } from './WebButton';
 import { WebField } from './WebField';
 import { useDiaryStore } from '@/src/stores/diary';
 import type { FoodItem } from '@/src/lib/aiTypes';
+import { analyzeFood } from '@/src/lib/aiClient';
 import type { Food, MealSlot } from '@/src/types';
 
 interface FoodCaptureProps {
@@ -39,31 +41,34 @@ const SLOT_LABELS: Record<MealSlot, string> = {
   snack: 'Snack',
 };
 
-function analyzeFood(description: string): FoodItem[] {
-  const lower = description.toLowerCase();
-  if (lower.includes('chicken')) {
-    return [{ name: 'Grilled chicken breast', estimatedCalories: 280, proteinG: 52, carbsG: 0, fatG: 6, confidence: 'high' }];
-  }
-  if (lower.includes('salad')) {
-    return [{ name: 'Mixed green salad', estimatedCalories: 120, proteinG: 4, carbsG: 16, fatG: 6, confidence: 'medium' }];
-  }
-  return [{ name: description.length > 30 ? description.substring(0, 30) + '...' : description, estimatedCalories: 350, proteinG: 18, carbsG: 35, fatG: 12, confidence: 'low' }];
-}
-
 export function FoodCapture({ onClose }: FoodCaptureProps) {
   const [description, setDescription] = useState('');
   const [items, setItems] = useState<FoodItem[] | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<MealSlot>('lunch');
   const [analyzing, setAnalyzing] = useState(false);
   const addEntry = useDiaryStore((s) => s.addEntry);
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!description.trim()) return;
     setAnalyzing(true);
-    setTimeout(() => {
-      setItems(analyzeFood(description.trim()));
+    setAnalysisError(null);
+    try {
+      const result = await analyzeFood({ description: description.trim() });
+      setItems(result.items);
+    } catch (error) {
+      setAnalysisError(error instanceof Error ? error.message : 'Could not analyze this food. Try again.');
+    } finally {
       setAnalyzing(false);
-    }, 800);
+    }
+  };
+
+  const updateItem = (index: number, changes: Partial<FoodItem>) => {
+    setItems((current) => current?.map((item, itemIndex) => (
+      itemIndex === index
+        ? { ...item, ...changes, confidence: item.confidence === 'low' ? 'medium' : item.confidence }
+        : item
+    )) ?? null);
   };
 
   const toFood = (item: FoodItem): Food => ({
@@ -87,6 +92,7 @@ export function FoodCapture({ onClose }: FoodCaptureProps) {
   const handleReset = () => {
     setItems(null);
     setDescription('');
+    setAnalysisError(null);
   };
 
   const totalCalories = items
@@ -138,6 +144,11 @@ export function FoodCapture({ onClose }: FoodCaptureProps) {
                     variant="primary"
                   />
                 </View>
+                {analysisError && (
+                  <Text accessibilityLiveRegion="polite" style={styles.errorText}>
+                    {analysisError}
+                  </Text>
+                )}
               </>
             ) : (
               <>
@@ -221,8 +232,42 @@ export function FoodCapture({ onClose }: FoodCaptureProps) {
                         {item.fatG}g F
                       </Text>
                     </View>
+                    {item.confidence === 'low' && (
+                      <View style={styles.editFields}>
+                        <Text style={styles.reviewText}>Review and correct this estimate before adding it.</Text>
+                        <TextInput
+                          accessibilityLabel={`${item.name} calories`}
+                          keyboardType="numeric"
+                          onChangeText={(value) => updateItem(idx, { estimatedCalories: Number(value) || 0 })}
+                          style={styles.editInput}
+                          value={String(item.estimatedCalories)}
+                        />
+                        <TextInput
+                          accessibilityLabel={`${item.name} protein`}
+                          keyboardType="numeric"
+                          onChangeText={(value) => updateItem(idx, { proteinG: Number(value) || 0 })}
+                          style={styles.editInput}
+                          value={String(item.proteinG)}
+                        />
+                        <TextInput
+                          accessibilityLabel={`${item.name} carbs`}
+                          keyboardType="numeric"
+                          onChangeText={(value) => updateItem(idx, { carbsG: Number(value) || 0 })}
+                          style={styles.editInput}
+                          value={String(item.carbsG)}
+                        />
+                        <TextInput
+                          accessibilityLabel={`${item.name} fat`}
+                          keyboardType="numeric"
+                          onChangeText={(value) => updateItem(idx, { fatG: Number(value) || 0 })}
+                          style={styles.editInput}
+                          value={String(item.fatG)}
+                        />
+                      </View>
+                    )}
                     <WebButton
-                      label="Add to Diary"
+                      disabled={item.confidence === 'low'}
+                      label={item.confidence === 'low' ? 'Correct values to add' : 'Add to Diary'}
                       onPress={() => handleAddToDiary(item)}
                       variant="secondary"
                       style={styles.addButton}
@@ -409,5 +454,32 @@ const styles = StyleSheet.create({
     color: WEB_TOKENS.colors.textMuted,
     fontStyle: 'italic',
     textAlign: 'center',
+  },
+  errorText: {
+    ...WEB_TOKENS.typography.caption,
+    color: WEB_TOKENS.colors.error,
+    marginTop: WEB_TOKENS.spacing.sm,
+  },
+  reviewText: {
+    ...WEB_TOKENS.typography.caption,
+    color: '#B45309',
+    marginBottom: WEB_TOKENS.spacing.xs,
+  },
+  editFields: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: WEB_TOKENS.spacing.xs,
+    marginBottom: WEB_TOKENS.spacing.sm,
+  },
+  editInput: {
+    ...WEB_TOKENS.typography.caption,
+    backgroundColor: WEB_TOKENS.colors.surfaceMuted,
+    borderColor: WEB_TOKENS.colors.border,
+    borderRadius: WEB_TOKENS.radii.sm,
+    borderWidth: 1,
+    color: WEB_TOKENS.colors.text,
+    minWidth: 72,
+    paddingHorizontal: WEB_TOKENS.spacing.sm,
+    paddingVertical: WEB_TOKENS.spacing.xs,
   },
 });

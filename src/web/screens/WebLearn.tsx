@@ -11,7 +11,8 @@ import {
 import { useCommentStore } from '@/src/stores/comments';
 import type { Comment } from '@/src/stores/comments';
 import { WebCard } from '../WebCard';
-import { WEB_TOKENS } from '../tokens';
+import { getWebTokens, WEB_TOKENS } from '../tokens';
+import { useIsDark } from '@/src/stores/theme';
 
 interface ArticleSection {
   heading?: string;
@@ -188,6 +189,7 @@ export function WebLearn() {
 
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
+  const tokens = getWebTokens(useIsDark());
 
   const { addComment, likeComment, articleComments } = useCommentStore();
   const [expandedArticle, setExpandedArticle] = useState<string | null>(null);
@@ -370,10 +372,10 @@ export function WebLearn() {
   );
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { backgroundColor: tokens.colors.page }]}>
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Learn</Text>
-        <Text style={styles.pageSub}>Science-backed articles</Text>
+        <Text style={[styles.pageTitle, { color: tokens.colors.text }]}>Learn</Text>
+        <Text style={[styles.pageSub, { color: tokens.colors.textMuted }]}>Science-backed articles</Text>
       </View>
       <ScrollView style={styles.scroll}>
         <View style={isDesktop ? styles.desktopGrid : styles.mobileStack}>

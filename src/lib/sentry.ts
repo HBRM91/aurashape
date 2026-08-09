@@ -1,6 +1,8 @@
 import { SENTRY_DSN } from './constants';
+import { isLocalOnly } from './privacyMode';
 
 export async function initSentry() {
+  if (isLocalOnly()) return;
   if (!SENTRY_DSN || SENTRY_DSN === 'your-sentry-dsn') return;
   try {
     const Sentry = require('@sentry/react-native');
@@ -16,6 +18,7 @@ export async function initSentry() {
 }
 
 export function captureError(error: Error, context?: Record<string, unknown>) {
+  if (isLocalOnly()) return;
   try {
     const Sentry = require('@sentry/react-native');
     Sentry.captureException(error, { extra: context });

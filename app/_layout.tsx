@@ -1,15 +1,16 @@
 import { useAuthStore } from '@/src/stores/auth';
 import { usePrivacyStore } from '@/src/stores/privacy';
 import { useOnboardingStore } from '@/src/stores/onboarding';
-import { useThemeColors } from '@/src/stores/theme';
+import { useThemeColors, useThemeStore } from '@/src/stores/theme';
 import { supabase } from '@/src/lib/supabase';
 import { getAuthDestination } from '@/src/lib/authRouting';
+import { isLocalOnly } from '@/src/lib/privacyMode';
 import { initSentry } from '@/src/lib/sentry';
 import { initAnalytics, identifyUser } from '@/src/lib/analytics';
 import { initPushNotifications, savePushToken } from '@/src/lib/notifications';
 import { Stack, usePathname, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text, View, type ViewStyle } from 'react-native';
 
 export default function RootLayout() {
   const { initialized, user, authError } = useAuthStore();
@@ -22,8 +23,10 @@ export default function RootLayout() {
 
   useEffect(() => {
     useAuthStore.getState().initialize();
+    const cleanupTheme = useThemeStore.getState().initializeSystemAppearance();
     initSentry();
     initAnalytics();
+    return cleanupTheme;
   }, []);
 
   useEffect(() => {
@@ -36,6 +39,10 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!initialized || !user) {
+      setDbOnboarded(null);
+      return;
+    }
+    if (isLocalOnly()) {
       setDbOnboarded(null);
       return;
     }
@@ -71,6 +78,7 @@ export default function RootLayout() {
       consentAccepted,
       onboardingCompleted,
       profileOnboarded: dbOnboarded,
+      localMode: isLocalOnly(),
     });
 
     if (destination.href && destination.href !== pathname) {
@@ -86,13 +94,14 @@ export default function RootLayout() {
         consentAccepted,
         onboardingCompleted,
         profileOnboarded: dbOnboarded,
+        localMode: isLocalOnly(),
       });
       router.replace((authenticatedDestination.href || '/(tabs)') as Href);
     }
   }, [consentAccepted, dbOnboarded, initialized, onboardingCompleted, pathname, router, user]);
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.bg }}>
+    <View className="flex-1" style={{ backgroundColor: colors.bg, minHeight: '100vh', width: '100%' } as unknown as ViewStyle}>
       <Stack screenOptions={{ headerShown: false }} />
       {authError ? (
         <View className="absolute bottom-4 left-4 right-4 rounded-lg bg-red-50 p-3">

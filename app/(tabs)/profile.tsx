@@ -15,6 +15,8 @@ import { supabase } from '@/src/lib/supabase';
 import { trackScreen } from '@/src/lib/analytics';
 import { useEffect, useState } from 'react';
 import type { Profile } from '@/src/types';
+import { isLocalOnly } from '@/src/lib/privacyMode';
+import { clearLocalUserData } from '@/src/lib/localData';
 import { SunDim, MoonStars, Monitor } from 'phosphor-react-native';
 
 export default function ProfileScreen() {
@@ -54,6 +56,11 @@ export default function ProfileScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            if (isLocalOnly()) {
+              await clearLocalUserData();
+              Alert.alert('Deleted', 'Your local data has been deleted from this device.');
+              return;
+            }
             const { error } = await supabase.rpc('delete_user');
             if (error) {
               Alert.alert('Error', error.message);

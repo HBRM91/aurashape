@@ -71,13 +71,8 @@
       "enabled": false
     },
     "supabase": {
-      "type": "local",
-      "command": "npx",
-      "args": ["-y", "@supabase/mcp-server"],
-      "env": {
-        "SUPABASE_URL": "https://gfolypnclohpeqhaufhl.supabase.co",
-        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdmb2x5cG5jbG9ocGVxaGF1ZmhsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NTU3ODE3MywiZXhwIjoyMTAxMTU0MTczfQ.L1XtKPYTWZTNcESx4OAu_Vvxco6xyFfE4l0UdKj92sY"
-      },
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp?project_ref=gfolypnclohpeqhaufhl&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching",
       "enabled": true
     },
     "filesystem": {

@@ -2,6 +2,7 @@ import { Slot, Tabs } from 'expo-router';
 import { useThemeColors } from '@/src/stores/theme';
 import { View, Text, Platform, type ColorValue } from 'react-native';
 import { WebAppShell } from '@/src/web/WebAppShell';
+import { useOnboardingStore } from '@/src/stores/onboarding';
 
 function TabIcon({ name, color }: { name: string; color: ColorValue }) {
   return (
@@ -25,6 +26,7 @@ export default function TabLayout() {
 
 function NativeTabLayout() {
   const colors = useThemeColors();
+  const sex = useOnboardingStore((s) => s.sex);
 
   return (
     <Tabs
@@ -86,13 +88,15 @@ function NativeTabLayout() {
           tabBarIcon: ({ color }) => <TabIcon name="📊" color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="cycle"
-        options={{
-          title: 'Cycle',
-          tabBarIcon: ({ color }) => <TabIcon name="🩸" color={color} />,
-        }}
-      />
+      {sex !== 'male' && (
+        <Tabs.Screen
+          name="cycle"
+          options={{
+            title: 'Cycle',
+            tabBarIcon: ({ color }) => <TabIcon name="🩸" color={color} />,
+          }}
+        />
+      )}
       <Tabs.Screen
         name="meditation"
         options={{
@@ -114,6 +118,7 @@ function NativeTabLayout() {
           tabBarIcon: ({ color }) => <TabIcon name="👥" color={color} />,
         }}
       />
+      <Tabs.Screen name="organization" options={{ href: null }} />
     </Tabs>
   );
 }

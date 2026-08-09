@@ -6,7 +6,8 @@ import {
   type ViewProps,
   type ViewStyle,
 } from 'react-native';
-import { WEB_TOKENS } from './tokens';
+import { getWebTokens, WEB_TOKENS } from './tokens';
+import { useIsDark } from '@/src/stores/theme';
 
 export interface WebCardProps extends ViewProps {
   children?: ReactNode;
@@ -22,13 +23,14 @@ export function WebCard({
   style,
   ...props
 }: WebCardProps) {
+  const tokens = getWebTokens(useIsDark());
   return (
     <View
       {...props}
       accessible={accessibilityLabel ? true : props.accessible}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole={accessibilityRole ?? (accessibilityLabel ? 'summary' : undefined)}
-      style={[styles.card, elevated ? WEB_TOKENS.shadows.card : undefined, style]}
+      style={[styles.card, { backgroundColor: tokens.colors.surface, borderColor: tokens.colors.border }, elevated ? WEB_TOKENS.shadows.card : undefined, style]}
     >
       {children}
     </View>

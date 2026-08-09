@@ -47,11 +47,12 @@ const mockFood3: Food = {
   source: 'system',
 };
 
-beforeEach(() => {
+  beforeEach(() => {
   useDiaryStore.setState({
     selectedDate: '2026-01-15',
     entries: [],
     recentFoods: [],
+    favoriteFoods: [],
   });
 });
 
@@ -95,6 +96,23 @@ describe('Diary Store', () => {
       const recent = useDiaryStore.getState().recentFoods;
       expect(recent).toHaveLength(2);
       expect(recent[0].name).toBe('Chicken Breast');
+    });
+  });
+
+  describe('favorites', () => {
+    it('toggles a food favorite without changing recent foods', () => {
+      useDiaryStore.getState().addEntry(mockFood, 'breakfast');
+
+      useDiaryStore.getState().toggleFavoriteFood(mockFood);
+
+      expect(useDiaryStore.getState().favoriteFoods).toEqual([mockFood]);
+      expect(useDiaryStore.getState().isFavoriteFood('f1')).toBe(true);
+      expect(useDiaryStore.getState().recentFoods).toEqual([mockFood]);
+
+      useDiaryStore.getState().toggleFavoriteFood(mockFood);
+
+      expect(useDiaryStore.getState().favoriteFoods).toEqual([]);
+      expect(useDiaryStore.getState().isFavoriteFood('f1')).toBe(false);
     });
   });
 

@@ -1,14 +1,14 @@
 # Aurashape — 12-Month Roadmap v1.1
 
-*Updated August 2, 2026 | 3-Person Team | Status: Phase 0 complete, entering Phase 1*
+*Updated August 8, 2026 | Web release status: Phase 0-3 core complete, release hardening in progress*
 
 ---
 
 ## Current State
 
-**Code complete:** E01 (Auth), E02 (Nutrition), E03 (Fasting), E04 (Workout), E05 (Body & Progress)
+**Code complete:** E01 (Auth), E02 (Nutrition), E03 (Fasting), E04 (Workout), E05 (Body & Progress), web Phase 0-3 core surfaces
 
-**Partial:** E06 (Science Content — tips done, articles placeholder), E07 (Community — forum listing + challenges exist, no threads/profiles/recipes), E08 (Email — opt-in done, Resend not wired), E09 (Platform — 7/9 features done, Supabase + store submission pending)
+**Partial:** E06 (Science Content — articles/tips exist, full theme polish pending), E07 (Community — forum/challenges exist, maturity and moderation pending), E08 (Email — opt-in done, provider operations pending), E09 (Platform — web release gates pass, Supabase production/security/store submission pending)
 
 **Remaining MVP work:** ~47 points across community, content, email, and platform.
 

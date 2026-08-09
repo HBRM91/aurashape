@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { DietaryPreference } from '@/src/types';
 import type { Recipe } from '@/src/lib/recipes';
 import { suggestRecipesForMacros } from '@/src/lib/recipes';
@@ -16,31 +18,39 @@ interface RecipeState {
   ) => Recipe[];
 }
 
-export const useRecipeStore = create<RecipeState>((set, get) => ({
-  savedRecipes: [],
-  mealPlan: {},
+export const useRecipeStore = create<RecipeState>()(
+  persist(
+    (set, get) => ({
+      savedRecipes: [],
+      mealPlan: {},
 
-  toggleSaved: (recipeId) =>
-    set((s) => {
-      const next = s.savedRecipes.includes(recipeId)
-        ? s.savedRecipes.filter((id) => id !== recipeId)
-        : [...s.savedRecipes, recipeId];
-      try { require('./achievements').useAchievementsStore.getState().checkAchievements(); } catch {}
-      return { savedRecipes: next };
+      toggleSaved: (recipeId) =>
+        set((s) => {
+          const next = s.savedRecipes.includes(recipeId)
+            ? s.savedRecipes.filter((id) => id !== recipeId)
+            : [...s.savedRecipes, recipeId];
+          try { require('./achievements').useAchievementsStore.getState().checkAchievements(); } catch {}
+          return { savedRecipes: next };
+        }),
+
+      isSaved: (recipeId) => get().savedRecipes.includes(recipeId),
+
+      setMealPlan: (date, meal, recipeId) =>
+        set((s) => ({
+          mealPlan: {
+            ...s.mealPlan,
+            [date]: { ...s.mealPlan[date], [meal]: recipeId },
+          },
+        })),
+
+      getMealPlan: (date) => get().mealPlan[date] || {},
+
+      getSuggestions: (remainingCal, remainingProtein, remainingCarbs, remainingFat, dietPreference) =>
+        suggestRecipesForMacros(remainingCal, remainingProtein, remainingCarbs, remainingFat, dietPreference),
     }),
-
-  isSaved: (recipeId) => get().savedRecipes.includes(recipeId),
-
-  setMealPlan: (date, meal, recipeId) =>
-    set((s) => ({
-      mealPlan: {
-        ...s.mealPlan,
-        [date]: { ...s.mealPlan[date], [meal]: recipeId },
-      },
-    })),
-
-  getMealPlan: (date) => get().mealPlan[date] || {},
-
-  getSuggestions: (remainingCal, remainingProtein, remainingCarbs, remainingFat, dietPreference) =>
-    suggestRecipesForMacros(remainingCal, remainingProtein, remainingCarbs, remainingFat, dietPreference),
-}));
+    {
+      name: 'recipes-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+    },
+  ),
+);

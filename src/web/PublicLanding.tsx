@@ -1,5 +1,6 @@
 import { Link, useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useEffect, useState } from 'react';
 
 import { WebButton } from './WebButton';
 import { WebCard } from './WebCard';
@@ -37,7 +38,11 @@ const FEATURES = [
 export function PublicLanding() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const isDesktop = width >= 900;
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    setIsDesktop(width >= 900);
+  }, [width]);
 
   return (
     <ScrollView

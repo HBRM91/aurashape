@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$distDir = Join-Path $PSScriptRoot '..' 'dist'
+$distDir = Join-Path (Join-Path $PSScriptRoot '..') 'dist'
 
 if (-not (Test-Path -LiteralPath $distDir -PathType Container)) {
   Write-Error "dist/ directory not found. Run 'npm run build:web' first."

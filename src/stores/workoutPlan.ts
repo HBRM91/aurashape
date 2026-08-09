@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { Exercise } from '@/src/lib/exercises';
+import type { WorkoutHistoryEntry } from './workout';
+import { useWorkoutStore } from './workout';
 
 export interface WorkoutTemplate {
   id: string;
@@ -26,6 +28,54 @@ interface WorkoutPlanState {
   updateTemplate: (id: string, updates: Partial<WorkoutTemplate>) => void;
   useTemplate: (id: string) => void;
   getByCategory: (cat: WorkoutTemplate['category']) => WorkoutTemplate[];
+  getAdaptations: () => WorkoutAdaptation[];
+}
+
+export interface WorkoutAdaptation {
+  exerciseId: string;
+  exerciseName: string;
+  direction: 'increase' | 'decrease';
+  message: string;
+}
+
+export function deriveWorkoutAdaptations(history: WorkoutHistoryEntry[]): WorkoutAdaptation[] {
+  const sessionsByExercise = new Map<string, Array<{ name: string; sets: WorkoutHistoryEntry['exercises'][number]['sets'] }>>();
+  history.forEach((entry) => {
+    entry.exercises.forEach((exercise) => {
+      const sessions = sessionsByExercise.get(exercise.exercise.id) || [];
+      sessions.push({ name: exercise.exercise.name, sets: exercise.sets });
+      sessionsByExercise.set(exercise.exercise.id, sessions);
+    });
+  });
+
+  const adaptations: WorkoutAdaptation[] = [];
+  sessionsByExercise.forEach((sessions, exerciseId) => {
+    const recent = sessions.slice(0, 3);
+    const comfortable = recent.length >= 3 && recent.every((session) => (
+      session.sets.length > 0 && session.sets.every((set) => set.reps > 0 && (set.rpe ?? 8) <= 7)
+    ));
+    const hard = recent.length >= 2 && recent.every((session) => (
+      session.sets.length > 0 && session.sets.some((set) => set.reps === 0 || (set.rpe ?? 0) >= 9)
+    ));
+    if (comfortable) {
+      adaptations.push({
+        exerciseId,
+        exerciseName: sessions[0].name,
+        direction: 'increase',
+        message: `You have completed ${recent.length} comfortable sessions. Consider a small weight or rep increase.`,
+      });
+      return;
+    }
+    if (hard) {
+      adaptations.push({
+        exerciseId,
+        exerciseName: sessions[0].name,
+        direction: 'decrease',
+        message: `Recent sessions were consistently high effort. Reduce load slightly and rebuild with control.`,
+      });
+    }
+  });
+  return adaptations;
 }
 
 let templateId = Date.now();
@@ -142,4 +192,5 @@ export const useWorkoutPlanStore = create<WorkoutPlanState>((set, get) => ({
     })),
 
   getByCategory: (cat) => get().templates.filter((t) => t.category === cat),
+  getAdaptations: () => deriveWorkoutAdaptations(useWorkoutStore.getState().history),
 }));

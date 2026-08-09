@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
-import { WEB_TOKENS } from './tokens';
-import { isNavItemActive, NAV_ITEMS } from './navItems';
+import { getWebTokens, WEB_TOKENS } from './tokens';
+import { getActiveNavItem, isNavItemActive, NAV_ITEMS } from './navItems';
+import { useOnboardingStore } from '@/src/stores/onboarding';
+import { getVisibleNavItems } from '@/src/lib/profileEligibility';
+import { useIsDark } from '@/src/stores/theme';
 
 const VISIBLE_COUNT = 5;
 
@@ -10,17 +13,22 @@ export function WebMobileNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [showMore, setShowMore] = useState(false);
+  const sex = useOnboardingStore((s) => s.sex);
+  const tokens = getWebTokens(useIsDark());
 
   if (Platform.OS !== 'web') {
     return null;
   }
 
-  const visibleItems = NAV_ITEMS.slice(0, VISIBLE_COUNT);
-  const moreItems = NAV_ITEMS.slice(VISIBLE_COUNT);
+  const navItems = getVisibleNavItems(NAV_ITEMS, { sex });
+  const visibleItems = navItems.slice(0, VISIBLE_COUNT);
+  const moreItems = navItems.slice(VISIBLE_COUNT);
+  const activeItem = getActiveNavItem(pathname);
+  const moreSelected = activeItem !== undefined && moreItems.includes(activeItem);
 
   return (
     <>
-      <View style={styles.nav}>
+      <View style={[styles.nav, { backgroundColor: tokens.colors.surface, borderTopColor: tokens.colors.border }]}>
         {visibleItems.map((item) => {
           const active = isNavItemActive(pathname, item);
           return (
@@ -30,13 +38,14 @@ export function WebMobileNav() {
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               onPress={() => router.push(item.route as Parameters<typeof router.push>[0])}
-              style={[styles.navItem, active ? styles.navItemActive : undefined]}
+              style={[styles.navItem, active ? [styles.navItemActive, { backgroundColor: tokens.colors.secondary }] : undefined]}
             >
               <Text style={styles.navIcon}>{item.icon}</Text>
               <Text
                 style={[
                   styles.navLabel,
                   active ? styles.navLabelActive : undefined,
+                  { color: active ? tokens.colors.primary : tokens.colors.textMuted },
                 ]}
               >
                 {item.label}
@@ -48,18 +57,18 @@ export function WebMobileNav() {
         <Pressable
           accessibilityLabel="More navigation options"
           accessibilityRole="button"
-          accessibilityState={{ expanded: showMore }}
+          accessibilityState={{ expanded: showMore, selected: moreSelected }}
           onPress={() => setShowMore(!showMore)}
-          style={styles.navItem}
+          style={[styles.navItem, moreSelected ? [styles.navItemActive, { backgroundColor: tokens.colors.secondary }] : undefined]}
         >
           <Text style={styles.navIcon}>{showMore ? '✕' : '⋯'}</Text>
-          <Text style={styles.navLabel}>More</Text>
+          <Text style={[styles.navLabel, moreSelected ? styles.navLabelActive : undefined, { color: moreSelected ? tokens.colors.primary : tokens.colors.textMuted }]}>More</Text>
         </Pressable>
       </View>
 
       {showMore ? (
         <View style={styles.moreOverlay}>
-          <View style={styles.morePanel}>
+           <View style={[styles.morePanel, { backgroundColor: tokens.colors.surface, borderColor: tokens.colors.border }]}>
             {moreItems.map((item) => {
               const active = isNavItemActive(pathname, item);
               return (
@@ -74,14 +83,15 @@ export function WebMobileNav() {
                   }}
                   style={[
                     styles.moreItem,
-                    active ? styles.moreItemActive : undefined,
+                     active ? [styles.moreItemActive, { backgroundColor: tokens.colors.secondary }] : undefined,
                   ]}
                 >
                   <Text style={styles.navIcon}>{item.icon}</Text>
                   <Text
                     style={[
                       styles.moreLabel,
-                      active ? styles.moreLabelActive : undefined,
+                       active ? styles.moreLabelActive : undefined,
+                       { color: active ? tokens.colors.primary : tokens.colors.textMuted },
                     ]}
                   >
                     {item.label}

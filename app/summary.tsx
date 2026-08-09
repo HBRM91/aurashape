@@ -1,4 +1,7 @@
-import { View, Text, ScrollView, TouchableOpacity, Share } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Share, Platform } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { WebAppShell } from '@/src/web/WebAppShell';
+import { WebSummary } from '@/src/web/screens/WebSummary';
 import { COLORS } from '@/src/constants/theme';
 import { useDiaryStore } from '@/src/stores/diary';
 import { useOnboardingStore } from '@/src/stores/onboarding';
@@ -7,6 +10,8 @@ import { useFastingStore } from '@/src/stores/fasting';
 import { useWorkoutStore } from '@/src/stores/workout';
 import { useMeditationStore } from '@/src/stores/meditation';
 import { useThemeColors } from '@/src/stores/theme';
+import { getNutritionTargets } from '@/src/lib/nutritionTargets';
+import { getSummaryDate } from '@/src/lib/summary';
 import {
   Barbell,
   Fire,
@@ -24,19 +29,20 @@ function todayStr(): string {
 }
 
 export default function DailySummaryScreen() {
+  const params = useLocalSearchParams<{ date?: string }>();
+  const summaryDate = getSummaryDate(params.date, todayStr());
+  if (Platform.OS === 'web') return <WebAppShell title="Daily Summary"><WebSummary date={summaryDate} /></WebAppShell>;
+
   const onboarding = useOnboardingStore();
   const { getDailyCalories, getDailyMacros, getEntriesBySlot } = useDiaryStore();
-  const waterMl = useWaterStore((s) => s.waterMl[todayStr()] || 0);
+  const waterMl = useWaterStore((s) => s.waterMl[summaryDate] || 0);
   const colors = useThemeColors();
   const fasting = useFastingStore();
   const workout = useWorkoutStore();
   const meditation = useMeditationStore();
 
-  const today = todayStr();
-  const calorieTarget = onboarding.calorieTarget || 2000;
-  const proteinTarget = onboarding.proteinTargetG || 100;
-  const carbsTarget = onboarding.carbsTargetG || 250;
-  const fatTarget = onboarding.fatTargetG || 55;
+  const today = summaryDate;
+  const { calorieTarget, proteinTargetG: proteinTarget, carbsTargetG: carbsTarget, fatTargetG: fatTarget } = getNutritionTargets(onboarding);
   const waterTarget = 2000;
 
   const consumed = getDailyCalories(today);

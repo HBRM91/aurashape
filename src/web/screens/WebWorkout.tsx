@@ -14,12 +14,15 @@ import { useWorkoutPlanStore } from '@/src/stores/workoutPlan';
 import {
   EXERCISES,
   CATEGORY_LABELS,
+  getExerciseInstruction,
   type Exercise,
 } from '@/src/lib/exercises';
 import type { ExerciseCategory, SetLog } from '@/src/types';
 import { WebCard } from '../WebCard';
 import { WebButton } from '../WebButton';
 import { WEB_TOKENS } from '../tokens';
+import { RestTimer } from '../RestTimer';
+import { WorkoutProgressChart } from '../WorkoutProgressChart';
 
 function formatMin(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -38,6 +41,7 @@ export function WebWorkout() {
   const {
     activeWorkout,
     history,
+    personalRecords,
     startWorkout,
     cancelWorkout,
     addExercise,
@@ -49,6 +53,7 @@ export function WebWorkout() {
     getVolume,
     getElapsedMinutes,
   } = useWorkoutStore();
+  const { getAdaptations } = useWorkoutPlanStore();
 
   const [summary, setSummary] = useState<WorkoutHistoryEntry | null>(null);
   const [showPicker, setShowPicker] = useState(false);
@@ -90,6 +95,7 @@ export function WebWorkout() {
     return (
       <ActiveWorkoutView
         workout={activeWorkout}
+        personalRecords={personalRecords}
         elapsedSec={elapsedSec}
         volume={getVolume()}
         onAddExercise={(e) => { addExercise(e); setShowPicker(false); }}
@@ -205,6 +211,29 @@ export function WebWorkout() {
           ))
         )}
       </WebCard>
+      {history[0]?.exercises[0] && (
+        <WebCard>
+          <WorkoutProgressChart
+            exerciseId={history[0].exercises[0].exercise.id}
+            exerciseName={history[0].exercises[0].exercise.name}
+            history={history}
+          />
+        </WebCard>
+      )}
+      {getAdaptations().length > 0 && (
+        <WebCard>
+          <Text style={styles.cardHeading}>Next Progression</Text>
+          {getAdaptations().map((adaptation) => (
+            <View key={adaptation.exerciseId} style={styles.adaptationRow}>
+              <Text style={styles.adaptationName}>{adaptation.exerciseName}</Text>
+              <Text style={styles.adaptationDirection}>
+                {adaptation.direction === 'increase' ? '↑ Increase' : '↓ Reduce'}
+              </Text>
+              <Text style={styles.adaptationMessage}>{adaptation.message}</Text>
+            </View>
+          ))}
+        </WebCard>
+      )}
     </View>
   );
 
@@ -276,6 +305,7 @@ function WorkoutTemplates({ onStart }: { onStart: (exerciseIds: string[]) => voi
 
 function ActiveWorkoutView({
   workout,
+  personalRecords,
   elapsedSec,
   volume,
   onAddExercise,
@@ -289,6 +319,7 @@ function ActiveWorkoutView({
   onTogglePicker,
 }: {
   workout: NonNullable<ReturnType<typeof useWorkoutStore.getState>['activeWorkout']>;
+  personalRecords: ReturnType<typeof useWorkoutStore.getState>['personalRecords'];
   elapsedSec: number;
   volume: number;
   onAddExercise: (e: Exercise) => void;
@@ -303,6 +334,7 @@ function ActiveWorkoutView({
 }) {
   const [searchEx, setSearchEx] = useState('');
   const [catEx, setCatEx] = useState<ExerciseCategory>('bodyweight');
+  const [restTimerKey, setRestTimerKey] = useState(0);
 
   const filtered = useMemo(() => {
     let list = EXERCISES;
@@ -333,17 +365,31 @@ function ActiveWorkoutView({
 
       <ScrollView style={styles.scroll}>
         <View style={styles.activeContent}>
+          <RestTimer key={restTimerKey} initialSeconds={60} autoStart={restTimerKey > 0} />
           {workout.exercises.map((we, wi) => (
             <WebCard key={wi}>
               <View style={styles.activeExHeader}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.activeExName}>{we.exercise.name}</Text>
                   <Text style={styles.activeExCat}>{CATEGORY_LABELS[we.exercise.category]}</Text>
+                  {personalRecords[we.exercise.id] && (
+                    <Text style={styles.personalBest}>
+                      Personal Best: {personalRecords[we.exercise.id].weight} kg × {personalRecords[we.exercise.id].reps}
+                    </Text>
+                  )}
                 </View>
                 <TouchableOpacity onPress={() => onRemoveExercise(wi)}>
                   <Text style={styles.removeBtn}>Remove</Text>
                 </TouchableOpacity>
               </View>
+
+              {getExerciseInstruction(we.exercise.id) && (
+                <View style={styles.instructionBox}>
+                  <Text style={styles.instructionTitle}>Form cues</Text>
+                  <Text style={styles.instructionText}>{getExerciseInstruction(we.exercise.id)?.instructions}</Text>
+                  <Text style={styles.instructionTip}>{getExerciseInstruction(we.exercise.id)?.tips}</Text>
+                </View>
+              )}
 
               <View style={styles.setHeaderRow}>
                 <Text style={[styles.setHeaderCell, { flex: 2 }]}>Set</Text>
@@ -377,7 +423,13 @@ function ActiveWorkoutView({
                 </View>
               ))}
 
-              <TouchableOpacity onPress={() => onAddSet(wi, { set_number: 0, reps: 0 })} style={styles.addSetBtn}>
+              <TouchableOpacity
+                onPress={() => {
+                  onAddSet(wi, { set_number: 0, reps: 0 });
+                  setRestTimerKey((key) => key + 1);
+                }}
+                style={styles.addSetBtn}
+              >
                 <Text style={styles.addSetBtnText}>+ Add Set</Text>
               </TouchableOpacity>
             </WebCard>
@@ -593,6 +645,26 @@ const styles = StyleSheet.create({
     color: WEB_TOKENS.colors.textMuted,
     fontSize: 10,
   },
+  adaptationRow: {
+    borderTopColor: WEB_TOKENS.colors.border,
+    borderTopWidth: 1,
+    marginTop: WEB_TOKENS.spacing.sm,
+    paddingTop: WEB_TOKENS.spacing.sm,
+  },
+  adaptationName: {
+    ...WEB_TOKENS.typography.label,
+    color: WEB_TOKENS.colors.text,
+  },
+  adaptationDirection: {
+    ...WEB_TOKENS.typography.label,
+    color: WEB_TOKENS.colors.primary,
+    marginTop: 2,
+  },
+  adaptationMessage: {
+    ...WEB_TOKENS.typography.caption,
+    color: WEB_TOKENS.colors.textMuted,
+    marginTop: 2,
+  },
   emptyText: {
     ...WEB_TOKENS.typography.caption,
     color: WEB_TOKENS.colors.textMuted,
@@ -641,6 +713,33 @@ const styles = StyleSheet.create({
     color: WEB_TOKENS.colors.textMuted,
     fontSize: 12,
     marginTop: 1,
+  },
+  personalBest: {
+    ...WEB_TOKENS.typography.label,
+    color: WEB_TOKENS.colors.primary,
+    fontSize: 12,
+    marginTop: WEB_TOKENS.spacing.xs,
+  },
+  instructionBox: {
+    backgroundColor: WEB_TOKENS.colors.secondary,
+    borderRadius: WEB_TOKENS.radii.sm,
+    marginBottom: WEB_TOKENS.spacing.md,
+    padding: WEB_TOKENS.spacing.sm,
+  },
+  instructionTitle: {
+    ...WEB_TOKENS.typography.label,
+    color: WEB_TOKENS.colors.primaryStrong,
+  },
+  instructionText: {
+    ...WEB_TOKENS.typography.caption,
+    color: WEB_TOKENS.colors.text,
+    marginTop: 2,
+  },
+  instructionTip: {
+    ...WEB_TOKENS.typography.caption,
+    color: WEB_TOKENS.colors.textMuted,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   removeBtn: {
     ...WEB_TOKENS.typography.label,

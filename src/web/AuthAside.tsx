@@ -1,4 +1,5 @@
 import { Image, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useEffect, useState } from 'react';
 import { WEB_TOKENS } from './tokens';
 
 const authArtwork = Platform.select({
@@ -8,7 +9,11 @@ const authArtwork = Platform.select({
 
 export function AuthAside() {
   const { width } = useWindowDimensions();
-  const isNarrowWeb = Platform.OS === 'web' && width > 0 && width < 768;
+  const [isNarrowWeb, setIsNarrowWeb] = useState(false);
+
+  useEffect(() => {
+    setIsNarrowWeb(Platform.OS === 'web' && width > 0 && width < 768);
+  }, [width]);
 
   return (
     <View testID="auth-aside" style={[styles.aside, isNarrowWeb ? styles.asideHidden : undefined]}>

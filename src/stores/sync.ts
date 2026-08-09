@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/src/lib/supabase';
 import { captureError } from '@/src/lib/sentry';
+import { isLocalOnly } from '@/src/lib/privacyMode';
 
 interface SyncItem {
   id: string;
@@ -25,6 +26,7 @@ export const useSyncStore = create<SyncState>((set, get) => ({
   syncing: false,
 
   enqueue: (item) => {
+    if (isLocalOnly()) return;
     set((s) => ({
       queue: [
         ...s.queue,
@@ -34,6 +36,7 @@ export const useSyncStore = create<SyncState>((set, get) => ({
   },
 
   processQueue: async (userId) => {
+    if (isLocalOnly()) return;
     const { queue, syncing } = get();
     if (syncing || queue.length === 0) return;
 

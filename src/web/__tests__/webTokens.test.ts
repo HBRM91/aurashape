@@ -1,4 +1,4 @@
-import { WEB_TOKENS } from '../tokens';
+import { getWebTokens, WEB_TOKENS } from '../tokens';
 
 describe('WEB_TOKENS', () => {
   it('defines the web brand colors', () => {
@@ -21,5 +21,16 @@ describe('WEB_TOKENS', () => {
     expect(WEB_TOKENS.typography.body.fontSize).toBe(16);
     expect(WEB_TOKENS.shadows.card.shadowOpacity).toBeGreaterThan(0);
     expect(WEB_TOKENS.contentWidths.desktop).toBe(1200);
+  });
+
+  it('provides equivalent light and dark semantic palettes', () => {
+    const light = getWebTokens(false);
+    const dark = getWebTokens(true);
+
+    expect(Object.keys(dark.colors).sort()).toEqual(Object.keys(light.colors).sort());
+    expect(dark.colors.page).not.toBe(light.colors.page);
+    expect(dark.colors.surface).not.toBe(light.colors.surface);
+    expect(dark.colors.text).not.toBe(light.colors.text);
+    expect(dark.colors.border).not.toBe(light.colors.border);
   });
 });

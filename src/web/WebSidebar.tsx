@@ -1,9 +1,11 @@
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { WebLogo } from './WebLogo';
-import { WEB_TOKENS } from './tokens';
+import { getWebTokens, WEB_TOKENS } from './tokens';
 import { isNavItemActive, NAV_ITEMS } from './navItems';
-import { useThemeStore } from '@/src/stores/theme';
+import { useIsDark, useThemeStore } from '@/src/stores/theme';
+import { useOnboardingStore } from '@/src/stores/onboarding';
+import { getVisibleNavItems } from '@/src/lib/profileEligibility';
 
 export function WebSidebar() {
   const pathname = usePathname();
@@ -12,6 +14,8 @@ export function WebSidebar() {
   const isDesktop = width >= 768;
   const mode = useThemeStore((s) => s.mode);
   const setMode = useThemeStore((s) => s.setMode);
+  const tokens = getWebTokens(useIsDark());
+  const sex = useOnboardingStore((s) => s.sex);
 
   if (Platform.OS !== 'web' || !isDesktop) {
     return null;
@@ -20,15 +24,16 @@ export function WebSidebar() {
   const toggleDarkMode = () => {
     setMode(mode === 'dark' ? 'light' : 'dark');
   };
+  const visibleNavItems = getVisibleNavItems(NAV_ITEMS, { sex });
 
   return (
-    <View style={styles.sidebar}>
+    <View style={[styles.sidebar, { backgroundColor: tokens.colors.surface, borderRightColor: tokens.colors.border }]}>
       <View style={styles.logoWrap}>
         <WebLogo compact />
       </View>
 
       <ScrollView style={styles.navScroll} contentContainerStyle={styles.navScrollContent}>
-        {NAV_ITEMS.map((item) => {
+        {visibleNavItems.map((item) => {
           const active = isNavItemActive(pathname, item);
           return (
             <Pressable
@@ -39,7 +44,7 @@ export function WebSidebar() {
               onPress={() => router.push(item.route as Parameters<typeof router.push>[0])}
               style={[
                 styles.navItem,
-                active ? styles.navItemActive : undefined,
+                active ? [styles.navItemActive, { backgroundColor: tokens.colors.secondary }] : undefined,
               ]}
             >
               <Text style={styles.navIcon}>{item.icon}</Text>
@@ -47,6 +52,7 @@ export function WebSidebar() {
                 style={[
                   styles.navLabel,
                   active ? styles.navLabelActive : undefined,
+                  { color: active ? tokens.colors.primary : tokens.colors.textMuted },
                 ]}
               >
                 {item.label}
@@ -56,7 +62,7 @@ export function WebSidebar() {
         })}
       </ScrollView>
 
-      <View style={styles.bottomSection}>
+      <View style={[styles.bottomSection, { borderTopColor: tokens.colors.border }]}>
         <Pressable
           accessibilityLabel="Toggle dark mode"
           accessibilityRole="button"
@@ -64,7 +70,7 @@ export function WebSidebar() {
           style={styles.toggleButton}
         >
           <Text style={styles.toggleIcon}>{mode === 'dark' ? '☀️' : '🌙'}</Text>
-          <Text style={styles.toggleLabel}>
+          <Text style={[styles.toggleLabel, { color: tokens.colors.textMuted }]}>
             {mode === 'dark' ? 'Light mode' : 'Dark mode'}
           </Text>
         </Pressable>

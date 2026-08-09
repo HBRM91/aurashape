@@ -1,7 +1,9 @@
 import { useRecipeStore } from '@/src/stores/recipes';
 import { RECIPES } from '@/src/lib/recipes';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 beforeEach(() => {
+  (AsyncStorage.setItem as jest.Mock).mockClear();
   useRecipeStore.setState({
     savedRecipes: [],
     mealPlan: {},
@@ -46,6 +48,15 @@ describe('Recipe Store', () => {
     it('should return empty plan for unknown date', () => {
       const plan = useRecipeStore.getState().getMealPlan('2099-01-01');
       expect(Object.keys(plan)).toHaveLength(0);
+    });
+
+    it('should persist planned meals for the next app session', () => {
+      useRecipeStore.getState().setMealPlan('2026-03-15', 'breakfast', 'r-protein-oats');
+
+      expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+        'recipes-storage',
+        expect.stringContaining('r-protein-oats'),
+      );
     });
   });
 

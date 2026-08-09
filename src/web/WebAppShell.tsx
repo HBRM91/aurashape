@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { usePathname } from 'expo-router';
-import { WEB_TOKENS } from './tokens';
+import { getWebTokens, WEB_TOKENS } from './tokens';
 import { WebSidebar } from './WebSidebar';
 import { WebTopBar } from './WebTopBar';
 import { WebMobileNav } from './WebMobileNav';
 import { getActiveNavItem } from './navItems';
+import { useIsDark } from '@/src/stores/theme';
 
 export interface WebAppShellProps {
   children: ReactNode;
@@ -16,13 +17,14 @@ export function WebAppShell({ children, title }: WebAppShellProps) {
   const { width } = useWindowDimensions();
   const pathname = usePathname();
   const isDesktop = width >= 768;
+  const tokens = getWebTokens(useIsDark());
 
   if (Platform.OS !== 'web') {
     return <>{children}</>;
   }
 
   return (
-    <View style={styles.shell}>
+    <View style={[styles.shell, { backgroundColor: tokens.colors.page }]}>
       <WebSidebar />
 
       <View style={[styles.contentArea, isDesktop ? styles.contentAreaDesktop : styles.contentAreaMobile]}>

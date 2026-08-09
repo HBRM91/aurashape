@@ -52,12 +52,14 @@ const styles = StyleSheet.create({
     backgroundColor: WEB_TOKENS.colors.page,
     flex: 1,
     flexDirection: 'row',
-  },
+    minHeight: '100vh',
+  } as unknown as ViewStyle,
   left: {
     flex: 1,
     justifyContent: 'center',
+    minHeight: '100vh',
     minWidth: 0,
-  },
+  } as unknown as ViewStyle,
   formScroll: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -66,7 +68,8 @@ const styles = StyleSheet.create({
   },
   formScrollView: {
     flex: 1,
-  },
+    minHeight: '100vh',
+  } as unknown as ViewStyle,
   formContainer: {
     maxWidth: 440,
     paddingHorizontal: WEB_TOKENS.spacing.xl,

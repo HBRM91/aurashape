@@ -5,6 +5,7 @@ export interface AuthRoutingInput {
   consentAccepted: boolean;
   onboardingCompleted: boolean;
   profileOnboarded: boolean | null;
+  localMode?: boolean;
 }
 
 export interface AuthDestination {
@@ -29,9 +30,16 @@ export function getAuthDestination({
   consentAccepted,
   onboardingCompleted,
   profileOnboarded,
+  localMode = false,
 }: AuthRoutingInput): AuthDestination {
   if (!initialized || PUBLIC_PATHS.has(pathname)) {
     return { kind: 'public' };
+  }
+
+  if (localMode) {
+    if (!consentAccepted) return { kind: 'consent', href: '/onboarding/privacy-consent' };
+    if (!onboardingCompleted) return { kind: 'onboarding', href: '/onboarding' };
+    return { kind: 'app' };
   }
 
   if (!userId) {
