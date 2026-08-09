@@ -1,6 +1,6 @@
 import { Link, useRouter } from 'expo-router';
 import { Image, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { WebButton } from './WebButton';
 import { WebCard } from './WebCard';
@@ -39,13 +39,26 @@ export function PublicLanding() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [isDesktop, setIsDesktop] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     setIsDesktop(width >= 900);
   }, [width]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.location) return;
+    const hash = window.location.hash;
+    if (!hash) return;
+    const id = hash.replace('#', '');
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
   return (
     <ScrollView
+      ref={scrollRef}
       contentContainerStyle={styles.scrollContent}
       style={styles.page}
     >

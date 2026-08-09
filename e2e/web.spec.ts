@@ -82,6 +82,7 @@ test.describe('Deployment smoke checks', () => {
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByPlaceholder('your@email.com').fill('test@example.com');
     await page.getByRole('button', { name: 'Finish' }).click();
     await expect(page).toHaveURL(/\/diary\/?$/);
   }
