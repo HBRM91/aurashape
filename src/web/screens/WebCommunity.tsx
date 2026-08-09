@@ -12,7 +12,8 @@ import {
 import { useCommunityStore, type ForumThread } from '@/src/stores/community';
 import { WebCard } from '../WebCard';
 import { WebButton } from '../WebButton';
-import { WEB_TOKENS } from '../tokens';
+import { getWebTokens, WEB_TOKENS } from '../tokens';
+import { useIsDark } from '@/src/stores/theme';
 
 const CHALLENGES = [
   { id: 'c1', name: '7-Day Tracking Streak', desc: 'Log your meals every day for a week', participants: 128, emoji: '🔥' },
@@ -39,6 +40,7 @@ export function WebCommunity() {
 
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
+  const tokens = getWebTokens(useIsDark());
 
   const {
     threads,
@@ -225,10 +227,10 @@ export function WebCommunity() {
   );
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { backgroundColor: tokens.colors.page }]}>
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Community</Text>
-        <Text style={styles.pageSub}>Learn, share, and grow together</Text>
+        <Text style={[styles.pageTitle, { color: tokens.colors.text }]}>Community</Text>
+        <Text style={[styles.pageSub, { color: tokens.colors.textMuted }]}>Learn, share, and grow together</Text>
       </View>
       <ScrollView style={styles.scroll}>
         <View style={isDesktop ? styles.desktopGrid : styles.mobileStack}>
@@ -291,7 +293,6 @@ function ChallengesView() {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: WEB_TOKENS.colors.page,
   },
   header: {
     paddingHorizontal: WEB_TOKENS.spacing.lg,

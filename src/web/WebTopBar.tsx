@@ -15,7 +15,7 @@ export function WebTopBar({ title }: WebTopBarProps) {
   const tokens = getWebTokens(useIsDark());
   const router = useRouter();
 
-  if (Platform.OS !== 'web' || !isDesktop) {
+  if (Platform.OS !== 'web') {
     return null;
   }
 
@@ -27,7 +27,7 @@ export function WebTopBar({ title }: WebTopBarProps) {
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <View style={[styles.topBar, { backgroundColor: tokens.colors.surface, borderBottomColor: tokens.colors.border }]}>
+    <View style={[styles.topBar, isDesktop ? styles.topBarDesktop : styles.topBarMobile, { backgroundColor: tokens.colors.surface, borderBottomColor: tokens.colors.border }]}>
       <Text style={[styles.title, { color: tokens.colors.text }]}>{title ?? ''}</Text>
 
       <Pressable
@@ -39,7 +39,7 @@ export function WebTopBar({ title }: WebTopBarProps) {
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>
         </View>
-        <Text style={[styles.userName, { color: tokens.colors.text }]}>{displayName}</Text>
+        {isDesktop ? <Text style={[styles.userName, { color: tokens.colors.text }]}>{displayName}</Text> : null}
       </Pressable>
     </View>
   );
@@ -52,9 +52,17 @@ const styles = StyleSheet.create({
     borderBottomColor: WEB_TOKENS.colors.border,
     borderBottomWidth: 1,
     flexDirection: 'row',
-    height: 56,
     justifyContent: 'space-between',
     paddingHorizontal: WEB_TOKENS.spacing.lg,
+    position: 'sticky' as const,
+    top: 0,
+    zIndex: 10,
+  },
+  topBarDesktop: {
+    height: 56,
+  },
+  topBarMobile: {
+    height: 48,
   },
   title: {
     ...WEB_TOKENS.typography.subheading,

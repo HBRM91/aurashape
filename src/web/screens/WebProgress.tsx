@@ -404,7 +404,6 @@ function MiniInsight({ label, value, target, bg, color }: { label: string; value
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: WEB_TOKENS.colors.page,
   },
   header: {
     paddingHorizontal: WEB_TOKENS.spacing.lg,

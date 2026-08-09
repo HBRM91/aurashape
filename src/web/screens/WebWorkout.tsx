@@ -20,7 +20,8 @@ import {
 import type { ExerciseCategory, SetLog } from '@/src/types';
 import { WebCard } from '../WebCard';
 import { WebButton } from '../WebButton';
-import { WEB_TOKENS } from '../tokens';
+import { getWebTokens, WEB_TOKENS } from '../tokens';
+import { useIsDark } from '@/src/stores/theme';
 import { RestTimer } from '../RestTimer';
 import { WorkoutProgressChart } from '../WorkoutProgressChart';
 
@@ -237,10 +238,12 @@ export function WebWorkout() {
     </View>
   );
 
+  const tokens = getWebTokens(useIsDark());
+
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { backgroundColor: tokens.colors.page }]}>
       <View style={styles.header}>
-        <Text style={styles.pageTitle}>Workout</Text>
+        <Text style={[styles.pageTitle, { color: tokens.colors.text }]}>Workout</Text>
       </View>
       <ScrollView style={styles.scroll}>
         <View style={isDesktop ? styles.desktopGrid : styles.mobileStack}>
@@ -526,7 +529,6 @@ function SummaryStat({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: WEB_TOKENS.colors.page,
   },
   header: {
     paddingHorizontal: WEB_TOKENS.spacing.lg,

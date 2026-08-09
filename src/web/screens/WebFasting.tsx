@@ -218,7 +218,6 @@ export function WebFasting() {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: WEB_TOKENS.colors.page,
   },
   header: {
     paddingHorizontal: WEB_TOKENS.spacing.lg,

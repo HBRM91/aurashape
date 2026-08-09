@@ -19,7 +19,8 @@ import { FoodSearchSheet } from '../FoodSearchSheet';
 import { BarcodeLookupSheet } from '../BarcodeLookupSheet';
 import { QuickAddSheet } from '../QuickAddSheet';
 import { MealPlanner } from '../MealPlanner';
-import { WEB_TOKENS } from '../tokens';
+import { getWebTokens, WEB_TOKENS } from '../tokens';
+import { useIsDark } from '@/src/stores/theme';
 import { getNutritionTargets } from '@/src/lib/nutritionTargets';
 
 const SLOTS: { slot: MealSlot; label: string; emoji: string }[] = [
@@ -42,6 +43,7 @@ export function WebDiary() {
 
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
+  const tokens = getWebTokens(useIsDark());
 
   const { selectedDate, getDailyCalories, getDailyMacros, copyFromDate, getEntriesBySlot, getSlotCalories, addEntry } = useDiaryStore();
   const onboarding = useOnboardingStore();
@@ -230,11 +232,11 @@ export function WebDiary() {
   );
 
   return (
-    <View style={styles.page}>
+    <View style={[styles.page, { backgroundColor: tokens.colors.page }]}>
       <View style={styles.header}>
         <View style={styles.headerCopy}>
-          <Text style={styles.pageTitle}>{view === 'diary' ? 'Food Diary' : 'Meal Plan'}</Text>
-          <Text style={styles.dateText}>{selectedDate}</Text>
+          <Text style={[styles.pageTitle, { color: tokens.colors.text }]}>{view === 'diary' ? 'Food Diary' : 'Meal Plan'}</Text>
+          <Text style={[styles.dateText, { color: tokens.colors.textMuted }]}>{selectedDate}</Text>
         </View>
         <View style={styles.viewToggle}>
           <TouchableOpacity
@@ -304,7 +306,6 @@ export function WebDiary() {
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: WEB_TOKENS.colors.page,
   },
   header: {
     alignItems: 'center',

@@ -30,7 +30,7 @@ export function WebAppShell({ children, title }: WebAppShellProps) {
       <View style={[styles.contentArea, isDesktop ? styles.contentAreaDesktop : styles.contentAreaMobile]}>
         <WebTopBar title={title ?? getActiveNavItem(pathname)?.label} />
 
-        <View style={styles.contentRegion}>
+        <View style={[styles.contentRegion, { backgroundColor: tokens.colors.page }]}>
           {children}
         </View>
 
@@ -47,10 +47,12 @@ const styles = StyleSheet.create({
     backgroundColor: WEB_TOKENS.colors.page,
     flex: 1,
     flexDirection: 'row',
+    minHeight: '100vh' as unknown as number,
   },
   contentArea: {
     flex: 1,
     minWidth: 0,
+    minHeight: '100vh' as unknown as number,
   },
   contentAreaDesktop: {
     marginLeft: SIDEBAR_WIDTH,
@@ -60,11 +62,8 @@ const styles = StyleSheet.create({
     paddingBottom: 64,
   },
   contentRegion: {
-    marginLeft: 'auto',
-    marginRight: 'auto',
-    maxWidth: WEB_TOKENS.contentWidths.desktop,
     flex: 1,
     minWidth: 0,
-    width: '100%',
+    overflow: 'hidden' as const,
   },
 });
