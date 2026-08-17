@@ -1,6 +1,6 @@
 # Aurashape — Architecture Review & Deep Product Backlog
 
-**Date:** 2026-08-17
+**Date:** 2026-08-17 (v2 — brand-funnel & monetization pivot)
 **Scope:** Full-stack review of the Expo/Supabase codebase, competitive gap analysis against
 MyFitnessPal, YAZIO and Freeletics, and a cost-minimal execution backlog.
 **Constraint:** Reach top-tier product quality at minimal recurring cost.
@@ -8,6 +8,16 @@ MyFitnessPal, YAZIO and Freeletics, and a cost-minimal execution backlog.
 > This document supersedes nothing. `docs/PRODUCT-BACKLOG.md` and `docs/FINAL-RELEASE-BACKLOG.md`
 > remain the record of *release* scope. This document covers what comes after that: the
 > structural work needed to compete with category leaders, and the defects that block it.
+
+> **v2 update — read this first.** Sections 0–11 below are the original standalone-product
+> review. The business context has since been clarified and it changes priorities materially:
+> Aurashape is now explicitly a **brand-funnel app for Aurabiosens** (a Morocco-based sports
+> nutrition brand — protein bars, whey, protein drinks, protein cubes, cereal bars; French/
+> English/Arabic markets; currently B2B-distributor-focused with no app or e-commerce API yet,
+> a Shopify storefront planned once production starts), monetized from day one via a **low,
+> mass-market subscription (~€2/month)** rather than deferred. **§12 is the current plan.**
+> Sections 0–11 remain valid for the defect catalog, cost model and phase content (W0/W1/W3/W4
+> are unchanged) — §12 tells you how the sequencing and monetization/brand epics change.
 
 ---
 
@@ -587,3 +597,156 @@ Recorded so they are decisions rather than oversights: social feed expansion, vi
 live classes, hardware integrations beyond standard health platforms, marketplace/coach
 matching, Android Wear/watchOS standalone apps (beyond RET-02 widgets), and any additional
 top-level feature area before W2 closes.
+
+---
+
+## 12. v2 — Brand-Funnel & Monetization Pivot
+
+### 12.1 What changed and why it matters
+
+Two facts moved the plan:
+
+1. **Aurabiosens has no e-commerce backend yet.** Their live site (`aurabiosens.netlify.app`)
+   is a marketing page with a "Nutrition Lab" macro calculator and a distributor contact form —
+   no cart, no product API, no loyalty program. A Shopify storefront is planned once production
+   starts, but is not a dependency for this app today.
+2. **Subscription revenue starts now, priced low (~€2/month), not "eventually."** This is a
+   volume play, not a premium play — closer to Duolingo's mass-market pricing than YAZIO Pro's
+   (~€9–15/mo). It changes the cost math in **§5** from a planning exercise into a launch
+   gate: at €2/mo, a handful of ungated AI-vision users can cost more in inference than their
+   entire cohort pays in, in the same month.
+
+**What this does *not* change:** every defect in §2 still blocks launch. A €2 subscription to
+an app that silently overstates calories (A7), loses data on reinstall (A1), or has never fired
+an analytics event (A4) is worse than no subscription — it's a refund and a churn story on a
+product whose whole value proposition is trustworthy, low-friction tracking. **W0 (Foundation
+Repair) is unchanged and still first.**
+
+### 12.2 What Aurabiosens tells us about the product
+
+From the brand review: precision/transparency-led positioning ("industrial rigor", clean
+label), a product line built entirely around **protein** (bars, cubes, whey, RTD shakes) plus
+one energy product (cereal bar), Morocco/MENA go-to-market, FR/EN/AR trilingual, and a
+WhatsApp-first lead-capture pattern already validated on their own site (their macro calculator
+ends in a WhatsApp handoff, not a form submission into a CRM).
+
+Design implication: **the app's brand-funnel mechanic is a protein/energy gap surfaced by the
+existing diary math, not a bolt-on ad unit.** `getDailyMacros` (`src/stores/diary.ts:126`)
+already computes the shortfall against target. Turning "you're 34 g short on protein today"
+into "a Whey Native scoop or a Protein Bar closes that" is a content mapping over data the app
+already has — it's the cheapest, most native version of this brand-funnel imaginable, and it's
+useful to the user on its own merits (unlike a generic banner).
+
+### 12.3 Revised phase order
+
+```
+W0  Foundation Repair          (unchanged — §7, non-negotiable, still first)
+W1  Core Loop + Cheap Monetization   (merged — §12.4; was two phases, now parallel)
+W1b Brand-Funnel Layer          (new — §12.5; starts once W0 lands, ships alongside W1)
+W3  Retention                   (unchanged — §7)
+W4  Training Depth              (unchanged — §7)
+INTEG Tracker Integrations      (new — §12.6; sequenced by cost, starts after W1)
+W5  Content & Growth            (unchanged — §7, GROW-02 localization absorbed into 12.5)
+W6  Cost & Ops                  (unchanged — §7, now higher-stakes given §12.1)
+```
+
+The old separation between "win the core loop" (W1) and "install monetization" (W2) collapses:
+at €2/mo the paywall has to exist *before* the AI feature ships, not after, because the AI
+feature is the cost driver the price point can't absorb ungated. MON-01/02/04/05 move to run
+concurrently with FOOD-01..08, not after them.
+
+### 12.4 W1 — Core Loop + Cheap Monetization (merged)
+
+All of §7's original FOOD-01..08 and UX-01 stand unchanged. Monetization scope is **narrower**
+than the original MON-01..06, because a €2 price point cannot carry a full paywall-everything
+strategy — it has to feel generous or the price doesn't do its job of being a no-brainer.
+
+| ID | Story | AC | Est | Deps |
+|---|---|---|---:|---|
+| **MON-01** | Store + RevenueCat integration | `react-native-purchases` wired for iOS/Android; single "Aurashape Plus" product at ~€2/mo (+ an annual option at a discount, e.g. ~€14.99/yr); sandbox purchase/renew/cancel/refund/restore verified on device | 3 | — |
+| **MON-02** | Entitlement layer | `useEntitlement()`; cached on-device, revalidated on foreground; never blocks UI on network; offline grace period | 2 | MON-01 |
+| **MON-04'** | Minimal, generous gating | Free tier: unlimited manual logging, barcode scan, fasting, local coach, basic charts, cloud sync **capped** (e.g. last 90 days) — cloud sync is a cost driver (storage + egress), so it's the natural line, not a value-withholding one. Paid: full history sync, AI photo logging (quota'd per **COST-02**), adaptive targets (RET-04), full recipe/program library, data export. No feature the user already relies on daily is ever moved behind the wall after the fact | 2 | MON-02 |
+| **MON-03'** | Paywall + trial | 7-day trial; single clear price, no tiers to compare (tiers add support burden that a €2 price can't fund); localized pricing in MAD/EUR/USD; store-policy-required disclosures | 2 | MON-02 |
+| **MON-05** | Server-side entitlement | RevenueCat webhook → Supabase `entitlements` table, RLS-protected; edge functions check entitlement before spending on inference — the client is never trusted for cost-gating decisions | 2 | MON-01 |
+| **COST-02** | AI quota, hard | Because margin per user is ~€1.50–1.80/mo after store fees, the daily/monthly AI quota is not a UX nicety, it's the difference between profitable and loss-making at scale. Quota enforced server-side; 429 with a clear message; quota visible in-app | 2 | MON-05 |
+
+**Note on MON-06 (lifecycle UX) and the original MON-03 tiering:** deferred to W3 — not needed
+for a single-tier €2 launch, revisit once there's usage data to justify a second tier.
+
+### 12.5 W1b — Brand-Funnel Layer (new)
+
+| ID | Story | AC | Est | Deps |
+|---|---|---|---:|---|
+| **BRAND-01** | Localization: FR + AR + EN | i18n framework installed (absorbs old **GROW-02**, which wrongly assumed German-first); FR is the primary locale, AR includes RTL layout support, EN retained; date/number/unit formatting per locale; pseudo-locale test in CI | 6 | — |
+| **BRAND-02** | Nutrition-gap recommendation surface | Reads existing `getDailyMacros`/target-shortfall data; maps protein/energy gaps to Aurabiosens product categories (not fake inventory — categories: protein bar, protein cube, whey, RTD shake, energy bar); shown as a helpful diary-screen suggestion, never an interstitial or a dark pattern; fully suppressible in settings; zero effect on core tracking accuracy or UX if disabled | 3 | FND-06 (accurate macros first) |
+| **BRAND-03** | Content-catalog module (pre-Shopify) | Product info (name, macros, positioning) stored as versioned local content, not a live API — because there is no commerce backend yet; module interface designed so swapping in Shopify's Storefront API later is a data-source change, not a UI rewrite | 2 | — |
+| **BRAND-04** | Lead capture: WhatsApp + email | Matches the brand's existing validated pattern (their calculator → WhatsApp handoff); "get this from Aurabiosens" opens WhatsApp with a prefilled message, or captures an email for a waitlist; consent-gated, GDPR-compliant, logged to a `leads` table with source attribution | 2 | BRAND-03 |
+| **BRAND-05** | Distributor/B2B tie-in | Aurashape's existing organization/employer tables (`202608090001_b2b_foundation.sql`) already model exactly the relationship Aurabiosens wants with gyms/distributors; extend org onboarding to let a distributor-partner gym enroll members with co-branded content | 3 | existing B2B tables |
+| **BRAND-06** | Shopify readiness stub | Define the commerce interface (`ProductCatalogSource`) now, even though only `BRAND-03`'s static implementation ships initially; when Shopify exists, a Storefront API adapter satisfies the same interface — no product-surface rewrite when commerce goes live | 1 | BRAND-03 |
+
+**Explicitly not built now:** live cart/checkout, inventory sync, order tracking, payment for
+physical goods inside the app. All of that is Shopify's job once it exists; the app's job is
+demand generation and handoff.
+
+### 12.6 INTEG — Tracker Integrations (new, sequenced by cost)
+
+"Maximum integration with other trackers" is real scope, not one ticket. Sequenced by
+engineering cost and how much of it is free:
+
+| ID | Story | Cost profile | Est | Deps |
+|---|---|---|---:|---|
+| **INTEG-01** | Apple HealthKit | Native SDK, no partner approval, free | 3 | FND-01 (this is the original **RET-01**, split out) |
+| **INTEG-02** | Google Health Connect | Native SDK, no partner approval, free | 3 | FND-01 |
+| **INTEG-03** | Steps → activity adjustment | Reads step data from INTEG-01/02, feeds `RET-04` adaptive targets; shown with the calculation explained, never a silent adjustment | 2 | INTEG-01/02, RET-04 |
+| **INTEG-04** | Strava | OAuth2, free developer tier, well-documented; workout import | 2 | FND-02 (sync engine must exist to reconcile imported vs logged workouts) |
+| **INTEG-05** | Garmin Connect | OAuth2 partner program, approval required, free API but real onboarding lead time | 3 | FND-02 |
+| **INTEG-06** | Fitbit Web API | OAuth2, Google-owned, rate-limited free tier | 2 | FND-02 |
+| **INTEG-07** | Oura | OAuth2, free tier available, sleep/readiness data — natural fit for the wellness/mindfulness surface (§12.7) | 2 | FND-02 |
+| **INTEG-08** | Whoop | OAuth2, developer program approval required | 2 | FND-02 |
+
+**Sequencing rule:** INTEG-01/02/03 ship in the same window as W1 — they're free, native, and
+directly feed the adaptive-target feature that's already on the roadmap. INTEG-04 onward are
+individually scoped, partner-approval-gated efforts; treat each as its own go/no-go decision
+once there's a user base large enough to justify the integration and support burden, not as a
+single "integrate everything" sprint.
+
+### 12.7 Wellness/Mindfulness Depth
+
+The existing `meditation`/`insights`/`localCoach` foundation is real but thin (content-limited,
+not architecture-limited — see §2.3 A9). "Best of everything including wellness and mindful"
+is a content and format expansion, not new infrastructure:
+
+| ID | Story | AC | Est | Deps |
+|---|---|---|---:|---|
+| **WELL-01** | Session library expansion | Breathing, body scan, sleep wind-down, focus, stress-reset, and affirmation sessions; each with duration, script, evidence note per the existing `docs/PRODUCT-BACKLOG.md` P1-09 content policy | 5 | — |
+| **WELL-02** | Sleep tracking | Manual sleep log now; Oura/HealthKit/Health Connect sleep import once INTEG-01/02/07 land; correlates with next-day energy/mood if the user opts in | 3 | INTEG-01/02 |
+| **WELL-03** | Mood & energy check-ins | Lightweight daily check-in feeding the local coach's weekly summary; entirely local-mode compatible, no server round-trip required | 2 | — |
+| **WELL-04** | Recovery-aware training | Training-plan recommendations soften after a poor-sleep or high-stress signal, using WELL-02/03 data; explains why, never silently changes the plan | 2 | WELL-02, WELL-03, TRN-02 |
+
+### 12.8 Revised sequencing diagram
+
+```
+W0 Foundation ██████████████  ← still first, still non-negotiable
+   └─ W1 Core Loop + Cheap Monetization ████████████████  ← merged, ships together
+        ├─ W1b Brand-Funnel Layer  ██████████████         ← starts once W0 lands
+        ├─ INTEG-01/02/03 (free trackers) ████████        ← rides along with W1
+        └─ W3 Retention ██████████
+             ├─ W4 Training Depth █████████
+             ├─ INTEG-04..08 (partner trackers)  — individually scoped, ongoing
+             ├─ W5 Content/Growth (BRAND-01 i18n now lives here) ██████████
+             └─ WELL-01..04 ██████████
+W6 Cost & Ops  ▓▓▓ ← continuous; COST-01/02 now launch-blocking, not nice-to-have
+```
+
+### 12.9 What this pivot does *not* license
+
+- It does not license skipping W0. A funnel that loses the funnel's own users' data is worse
+  than no funnel.
+- It does not license building the eleven-tab sprawl wider before UX-01 collapses it — a brand
+  funnel needs a *clear* daily habit loop even more than a standalone product does, because the
+  brand payoff only happens if the user keeps opening the app.
+- It does not license a live Shopify integration today — BRAND-06 defines the seam, nothing
+  more, until the storefront exists.
+- "Maximum tracker integration" does not mean shipping all eight INTEG items at once — §12.6's
+  sequencing is the plan, not a suggestion to parallelize partner-approval-gated work that
+  hasn't been requested by real usage yet.
