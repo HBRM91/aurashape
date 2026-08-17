@@ -1,6 +1,7 @@
-import { useDiaryStore, migrateLegacyEntryIds } from '@/src/stores/diary';
+import { useDiaryStore, migrateLegacyEntryIds, applyPulledDiaryRows } from '@/src/stores/diary';
 import { useSyncStore } from '@/src/stores/sync';
-import type { Food } from '@/src/types';
+import { mapDiaryEntryToPayload } from '@/src/lib/syncMappers';
+import type { DiaryEntry, Food } from '@/src/types';
 
 const mockFood: Food = {
   id: 'f1',
@@ -298,3 +299,41 @@ function mockEntryBase() {
     date: '2026-01-15',
   };
 }
+
+describe('applyPulledDiaryRows', () => {
+  const localEntry: DiaryEntry = mockEntryBase();
+
+  it('upserts a new row not yet present locally', () => {
+    const row = mapDiaryEntryToPayload({ ...localEntry, id: 'remote-1' });
+    const result = applyPulledDiaryRows([], [row], new Set());
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('remote-1');
+    expect(result[0].food?.name).toBe(mockFood.name);
+  });
+
+  it('updates an existing local entry with the pulled version', () => {
+    const row = mapDiaryEntryToPayload({ ...localEntry, servings: 3 });
+    const result = applyPulledDiaryRows([localEntry], [row], new Set());
+    expect(result).toHaveLength(1);
+    expect(result[0].servings).toBe(3);
+  });
+
+  it('removes the local entry when the pulled row carries a tombstone', () => {
+    const row = { ...mapDiaryEntryToPayload(localEntry), deleted_at: '2026-01-16T00:00:00.000Z' };
+    const result = applyPulledDiaryRows([localEntry], [row], new Set());
+    expect(result).toHaveLength(0);
+  });
+
+  it('never applies a pulled row for an id with a pending outbound edit', () => {
+    const row = mapDiaryEntryToPayload({ ...localEntry, servings: 99 });
+    const result = applyPulledDiaryRows([localEntry], [row], new Set([localEntry.id]));
+    expect(result[0].servings).toBe(localEntry.servings); // unchanged — local edit still in flight
+  });
+
+  it('leaves unrelated local entries untouched', () => {
+    const other: DiaryEntry = { ...localEntry, id: 'other-entry' };
+    const row = mapDiaryEntryToPayload({ ...localEntry, servings: 5 });
+    const result = applyPulledDiaryRows([localEntry, other], [row], new Set());
+    expect(result.find((e) => e.id === 'other-entry')).toEqual(other);
+  });
+});
