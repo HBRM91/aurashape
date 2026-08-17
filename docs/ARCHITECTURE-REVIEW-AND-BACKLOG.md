@@ -38,9 +38,17 @@ Shipped on `claude/app-architecture-backlog-yzb28x`, verified with a real `npm r
 over a separate tombstones table — simpler, standard Postgres/Supabase convention, and this
 schema already had update-in-place columns soft-delete fits alongside naturally. Client-issued
 hard `DELETE` on `diary_entries` is no longer permitted by RLS; see
-`supabase/migrations/202608170001_diary_soft_delete.sql`. **Not yet applied against a live
-Supabase project from this session** (no DB credentials here) — verify against a real/staging
-project before this reaches production.
+`supabase/migrations/202608170001_diary_soft_delete.sql`.
+
+**Verified against the live `aurashape` project** (gfolypnclohpeqhaufhl) once a Supabase MCP
+session was connected. It was found paused (INACTIVE) — the same free-tier auto-pause behavior
+called out as disqualifying for production in §5 — and restored to inspect. The migration had
+not actually been applied there yet; applied it for real and confirmed directly (not assumed):
+`diary_entries` has `updated_at`/`deleted_at` live, and `pg_policies` shows exactly
+select/insert/update policies with no DELETE policy at all. The security advisor caught one real
+issue the hand-written migration missed — a mutable `search_path` on the new trigger function —
+fixed in `202608170002_harden_set_updated_at_search_path.sql`, also applied and verified. The
+database is currently empty (0 rows, every table) — a clean dev project, not production data.
 
 **Scope note:** sync currently covers `diary_entries` only — workouts, body logs, and everything
 else still don't sync. Extending `SYNCED_TABLES` in `sync.ts` and wiring each store's mutations
