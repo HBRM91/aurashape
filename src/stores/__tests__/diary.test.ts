@@ -1,4 +1,4 @@
-import { useDiaryStore } from '@/src/stores/diary';
+import { useDiaryStore, migrateLegacyEntryIds } from '@/src/stores/diary';
 import type { Food } from '@/src/types';
 
 const mockFood: Food = {
@@ -233,3 +233,48 @@ describe('Diary Store', () => {
     });
   });
 });
+
+describe('migrateLegacyEntryIds', () => {
+  it('replaces a legacy Date.now()-counter ID with a fresh UUID', () => {
+    const legacy = { ...mockEntryBase(), id: '1737483920123' };
+    const [migrated] = migrateLegacyEntryIds([legacy]);
+    expect(migrated.id).not.toBe(legacy.id);
+    expect(migrated.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+  });
+
+  it('leaves an already-migrated UUID entry untouched', () => {
+    const entry = { ...mockEntryBase(), id: '01890a5d-ac96-774b-bcce-b302099a8057' };
+    const [migrated] = migrateLegacyEntryIds([entry]);
+    expect(migrated.id).toBe(entry.id);
+    expect(migrated).toEqual(entry);
+  });
+
+  it('preserves all other entry fields during migration', () => {
+    const legacy = { ...mockEntryBase(), id: '999', servings: 2.5 };
+    const [migrated] = migrateLegacyEntryIds([legacy]);
+    expect(migrated.servings).toBe(2.5);
+    expect(migrated.food).toEqual(legacy.food);
+    expect(migrated.date).toBe(legacy.date);
+  });
+
+  it('assigns distinct fresh IDs to multiple legacy entries', () => {
+    const entries = [
+      { ...mockEntryBase(), id: '100' },
+      { ...mockEntryBase(), id: '101' },
+    ];
+    const [a, b] = migrateLegacyEntryIds(entries);
+    expect(a.id).not.toBe(b.id);
+  });
+});
+
+function mockEntryBase() {
+  return {
+    id: '1',
+    user_id: '',
+    food_id: mockFood.id,
+    food: mockFood,
+    meal_slot: 'breakfast' as const,
+    servings: 1,
+    date: '2026-01-15',
+  };
+}
