@@ -1,4 +1,4 @@
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ViewStyle } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { WebLogo } from './WebLogo';
 import { getWebTokens, WEB_TOKENS } from './tokens';
@@ -89,7 +89,8 @@ const styles = StyleSheet.create({
     height: '100vh' as unknown as number,
     paddingBottom: WEB_TOKENS.spacing.md,
     paddingTop: WEB_TOKENS.spacing.md,
-    position: 'fixed' as const,
+    // web-only CSS value; react-native-web supports it, RN's ViewStyle doesn't model it.
+    position: 'fixed' as unknown as ViewStyle['position'],
     left: 0,
     top: 0,
     width: SIDEBAR_WIDTH,

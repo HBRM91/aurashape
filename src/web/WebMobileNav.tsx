@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { getWebTokens, WEB_TOKENS } from './tokens';
 import { getActiveNavItem, isNavItemActive, NAV_ITEMS } from './navItems';
@@ -116,7 +116,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingBottom: 8,
     paddingTop: 8,
-    position: 'fixed' as const,
+    // web-only CSS value; react-native-web supports it, RN's ViewStyle doesn't model it.
+    position: 'fixed' as unknown as ViewStyle['position'],
     width: '100%',
     zIndex: 20,
   },
@@ -150,7 +151,8 @@ const styles = StyleSheet.create({
   moreOverlay: {
     bottom: 64,
     left: 0,
-    position: 'fixed' as const,
+    // web-only CSS value; react-native-web supports it, RN's ViewStyle doesn't model it.
+    position: 'fixed' as unknown as ViewStyle['position'],
     right: 0,
     zIndex: 20,
   },

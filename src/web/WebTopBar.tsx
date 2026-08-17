@@ -1,4 +1,4 @@
-import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions, type ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getWebTokens, WEB_TOKENS } from './tokens';
 import { useAuthStore } from '@/src/stores/auth';
@@ -54,7 +54,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: WEB_TOKENS.spacing.lg,
-    position: 'sticky' as const,
+    // web-only CSS value; react-native-web supports it, RN's ViewStyle doesn't model it.
+    position: 'sticky' as unknown as ViewStyle['position'],
     top: 0,
     zIndex: 10,
   },
