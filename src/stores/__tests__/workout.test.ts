@@ -1,4 +1,5 @@
-import { useWorkoutStore } from '@/src/stores/workout';
+import { useWorkoutStore, migrateLegacyWorkoutIds } from '@/src/stores/workout';
+import type { WorkoutHistoryEntry } from '@/src/stores/workout';
 import type { Exercise } from '@/src/lib/exercises';
 import type { SetLog } from '@/src/types';
 
@@ -221,5 +222,45 @@ describe('Workout Store', () => {
       const minutes = useWorkoutStore.getState().getElapsedMinutes();
       expect(minutes).toBeGreaterThanOrEqual(0);
     });
+  });
+});
+
+function mockHistoryEntry(id: string): WorkoutHistoryEntry {
+  return {
+    id,
+    startTime: '2026-01-15T08:00:00.000Z',
+    endTime: '2026-01-15T08:45:00.000Z',
+    exercises: [],
+    completed: true,
+    totalVolume: 500,
+    durationMinutes: 45,
+  };
+}
+
+describe('migrateLegacyWorkoutIds', () => {
+  it('replaces a legacy Date.now()-counter ID with a fresh UUID', () => {
+    const legacy = mockHistoryEntry('1737483920123');
+    const [migrated] = migrateLegacyWorkoutIds([legacy]);
+    expect(migrated.id).not.toBe(legacy.id);
+    expect(migrated.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+  });
+
+  it('leaves an already-migrated UUID entry untouched', () => {
+    const entry = mockHistoryEntry('01890a5d-ac96-774b-bcce-b302099a8057');
+    const [migrated] = migrateLegacyWorkoutIds([entry]);
+    expect(migrated).toEqual(entry);
+  });
+
+  it('preserves session data during migration', () => {
+    const legacy = mockHistoryEntry('42');
+    const [migrated] = migrateLegacyWorkoutIds([legacy]);
+    expect(migrated.totalVolume).toBe(500);
+    expect(migrated.durationMinutes).toBe(45);
+    expect(migrated.completed).toBe(true);
+  });
+
+  it('assigns distinct fresh IDs to multiple legacy sessions', () => {
+    const [a, b] = migrateLegacyWorkoutIds([mockHistoryEntry('1'), mockHistoryEntry('2')]);
+    expect(a.id).not.toBe(b.id);
   });
 });

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/src/lib/analytics';
+import { generateId, isLegacyId } from '@/src/lib/id';
 import type { DiaryEntry, Food, MealSlot } from '@/src/types';
 
 function todayStr(): string {
@@ -26,11 +27,19 @@ interface DiaryState {
   getDailyMacros: (date: string) => { protein: number; carbs: number; fat: number };
 }
 
-let nextId = Date.now();
+/**
+ * Replaces any pre-UUIDv7 entry ID (`String(Date.now() + counter)`, which
+ * collides across devices/reinstalls) with a fresh UUIDv7. Exported as a
+ * pure function so the migration logic is testable independently of
+ * zustand's persist/rehydrate machinery.
+ */
+export function migrateLegacyEntryIds(entries: DiaryEntry[]): DiaryEntry[] {
+  return entries.map((entry) => (isLegacyId(entry.id) ? { ...entry, id: generateId() } : entry));
+}
 
 function makeEntry(food: Food, slot: MealSlot, date: string, servings: number): DiaryEntry {
   return {
-    id: String(nextId++),
+    id: generateId(),
     user_id: '',
     food_id: food.id,
     food,
@@ -85,7 +94,7 @@ export const useDiaryStore = create<DiaryState>()(
         const sourceEntries = entries.filter((e) => e.date === fromDate);
         const cloned = sourceEntries.map((e) => ({
           ...e,
-          id: String(nextId++),
+          id: generateId(),
           date: selectedDate,
         }));
         set((s) => ({ entries: [...s.entries, ...cloned] }));
@@ -122,6 +131,16 @@ export const useDiaryStore = create<DiaryState>()(
     {
       name: 'diary-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      // v0 -> v1: entry IDs were `String(Date.now() + counter)`, which
+      // collide across devices/reinstalls and are rejected by the UUID
+      // columns the server schema expects. Assign every legacy entry a
+      // fresh UUIDv7 once, on first load after the upgrade.
+      migrate: (persistedState) => {
+        const state = persistedState as DiaryState;
+        if (!state?.entries) return state;
+        return { ...state, entries: migrateLegacyEntryIds(state.entries) };
+      },
       partialize: (state) => ({
         ...state,
         selectedDate: todayStr(),

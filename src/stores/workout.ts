@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/src/lib/analytics';
+import { generateId, isLegacyId } from '@/src/lib/id';
 import type { SetLog } from '@/src/types';
 import type { Exercise } from '@/src/lib/exercises';
 
@@ -40,7 +41,15 @@ interface WorkoutState {
   getElapsedMinutes: () => number;
 }
 
-let workoutId = Date.now();
+/**
+ * Replaces any pre-UUIDv7 session ID (`String(Date.now() + counter)`, which
+ * collides across devices/reinstalls) with a fresh UUIDv7. Exported as a
+ * pure function so the migration logic is testable independently of
+ * zustand's persist/rehydrate machinery.
+ */
+export function migrateLegacyWorkoutIds(history: WorkoutHistoryEntry[]): WorkoutHistoryEntry[] {
+  return history.map((entry) => (isLegacyId(entry.id) ? { ...entry, id: generateId() } : entry));
+}
 
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
@@ -52,7 +61,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       startWorkout: () => {
         set({
           activeWorkout: {
-            id: String(workoutId++),
+            id: generateId(),
             startTime: new Date().toISOString(),
             endTime: null,
             exercises: [],
@@ -190,6 +199,15 @@ export const useWorkoutStore = create<WorkoutState>()(
     {
       name: 'workout-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      version: 1,
+      // v0 -> v1: session IDs were `String(Date.now() + counter)`, which
+      // collide across devices/reinstalls. Assign every legacy history
+      // entry a fresh UUIDv7 once, on first load after the upgrade.
+      migrate: (persistedState) => {
+        const state = persistedState as WorkoutState;
+        if (!state?.history) return state;
+        return { ...state, history: migrateLegacyWorkoutIds(state.history) };
+      },
       partialize: (state) => ({
         history: state.history,
         personalRecords: state.personalRecords,
