@@ -48,6 +48,8 @@ export interface Food {
   carbs_g: number;
   fat_g: number;
   fiber_g: number;
+  sugar_g?: number;
+  saturated_fat_g?: number;
   is_verified: boolean;
   is_aurabiosens: boolean;
   source: string;
