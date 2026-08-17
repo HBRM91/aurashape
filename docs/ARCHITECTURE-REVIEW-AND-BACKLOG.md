@@ -28,19 +28,24 @@ Shipped on `claude/app-architecture-backlog-yzb28x`, verified with a real `npm r
 |---|---|---|
 | FND-04 | ✅ Done | Analytics now uses the real posthog-react-native v4 instance API. |
 | FND-06 | ✅ Done | Foods without OFF serving data are scaled from 100g density, not mislabeled. |
-| FND-01 | ◐ ID-generation slice done | UUIDv7 + legacy-ID migration. Full repository-layer abstraction still deferred to when SQLite (FND-03) actually needs it. |
 | FND-05 | ✅ Done | `src/lib/events.ts` pub-sub replaces `require()`+swallowed-catch across 7 stores. |
-| FND-07 | ◐ Payload-shape slice done | `custom_food_macros` snapshot used instead of a fabricated `food_id`. No schema migration needed — RLS already permitted it. |
-| FND-02 | ◐ Write-path slice done | Outbox persisted, `processQueue` actually runs (on auth + foreground), all diary mutations enqueue, exponential backoff + quarantine (not silent data loss). **No pull path yet** — see below. |
+| FND-07 | ✅ Done | `custom_food_macros` snapshot used instead of a fabricated `food_id`. |
+| FND-02 | ✅ Done | Persisted outbox, `processQueue` actually runs, all diary mutations enqueue, exponential backoff + quarantine, soft-delete tombstones, a real pull path, and a two-device convergence test (`syncConvergence.test.ts`) proving insert/update/delete propagate both ways. Sync is no longer non-functional — this was the single largest finding in this review. |
+| FND-01 | ◐ ID-generation slice done | UUIDv7 + legacy-ID migration. Full repository-layer abstraction still deferred to when SQLite (FND-03) actually needs it. |
 | FND-03, FND-08, FND-09 | 🔲 Not started | |
 
-**Open decision, needed before the sync pull path can be built:** a pull path requires
-distinguishing "never synced to this device" from "deleted on another device." That needs either
-a `deleted_at` soft-delete column on `diary_entries` (and eventually the other synced tables) or
-a separate tombstones table — a real schema migration, not a client-only fix. Flagging rather
-than deciding unilaterally: soft-delete columns are simpler and match Postgres/Supabase
-convention, but touch RLS policies and every existing query; a tombstones table is more isolated
-but adds a second table to keep in sync. Worth a short discussion before the next slice of FND-02.
+**Schema decision taken:** soft-delete (`deleted_at` column + trigger-maintained `updated_at`)
+over a separate tombstones table — simpler, standard Postgres/Supabase convention, and this
+schema already had update-in-place columns soft-delete fits alongside naturally. Client-issued
+hard `DELETE` on `diary_entries` is no longer permitted by RLS; see
+`supabase/migrations/202608170001_diary_soft_delete.sql`. **Not yet applied against a live
+Supabase project from this session** (no DB credentials here) — verify against a real/staging
+project before this reaches production.
+
+**Scope note:** sync currently covers `diary_entries` only — workouts, body logs, and everything
+else still don't sync. Extending `SYNCED_TABLES` in `sync.ts` and wiring each store's mutations
+the same way diary.ts now does is straightforward given the pattern is proven, but each store's
+own `mapXToPayload`/`mapPayloadToX`/`applyPulledXRows` still needs writing.
 
 ---
 
