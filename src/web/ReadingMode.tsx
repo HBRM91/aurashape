@@ -210,13 +210,15 @@ function createFallbackSummary(claim?: string): ReadingSummary {
 
 const styles = StyleSheet.create({
   overlay: {
+    // 'fixed' and 'inset' are web-only CSS values react-native-web supports
+    // at runtime but React Native's own ViewStyle type doesn't model.
     position: 'fixed',
     inset: 0,
     backgroundColor: 'rgba(18, 35, 27, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
-  } as ViewStyle,
+  } as unknown as ViewStyle,
   panel: {
     backgroundColor: WEB_TOKENS.colors.surface,
     borderRadius: WEB_TOKENS.radii.lg,
