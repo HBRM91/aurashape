@@ -44,6 +44,7 @@ scripts/*
 !scripts/build-web.js
 !scripts/assert-web-export.js
 !scripts/assert-local-privacy.js
+!scripts/assert-secret-hygiene.js
 
 *.tsbuildinfo
 
