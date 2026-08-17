@@ -3,6 +3,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/src/lib/analytics';
 import { generateId, isLegacyId } from '@/src/lib/id';
+import { appEvents, APP_EVENTS } from '@/src/lib/events';
+import { useSyncStore } from './sync';
 import type { DiaryEntry, Food, MealSlot } from '@/src/types';
 
 function todayStr(): string {
@@ -65,8 +67,8 @@ export const useDiaryStore = create<DiaryState>()(
         const updatedRecent = [food, ...recentFoods.filter((f) => f.id !== food.id)].slice(0, 20);
         set({ entries: [...entries, entry], recentFoods: updatedRecent });
         track('meal_logged', { meal: slot, calories: (food.calories_per_serving || 0) * servings });
-        try { require('./sync').useSyncStore.getState().enqueue({ table: 'diary_entries', action: 'insert', payload: entry as any }); } catch {}
-        try { require('./achievements').useAchievementsStore.getState().checkAchievements(); } catch {}
+        useSyncStore.getState().enqueue({ table: 'diary_entries', action: 'insert', payload: entry as unknown as Record<string, unknown> });
+        appEvents.emit(APP_EVENTS.achievementsRecheck, undefined);
       },
 
       toggleFavoriteFood: (food) => {
