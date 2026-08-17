@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/src/lib/analytics';
 import { generateId, isLegacyId } from '@/src/lib/id';
+import { appEvents, APP_EVENTS } from '@/src/lib/events';
 import type { SetLog } from '@/src/types';
 import type { Exercise } from '@/src/lib/exercises';
 
@@ -173,7 +174,7 @@ export const useWorkoutStore = create<WorkoutState>()(
 
         track('workout_completed', { duration: durationMinutes, volume: totalVolume, exercises: activeWorkout.exercises.length });
 
-        try { require('./achievements').useAchievementsStore.getState().checkAchievements(); } catch {}
+        appEvents.emit(APP_EVENTS.achievementsRecheck, undefined);
 
         return entry;
       },

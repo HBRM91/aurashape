@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/src/lib/analytics';
+import { appEvents, APP_EVENTS } from '@/src/lib/events';
 
 export interface ForumThread {
   id: string;
@@ -254,7 +255,7 @@ export const useCommunityStore = create<CommunityState>()(
         set((s) => {
           if (s.joinedChallenges.some((c) => c.challengeId === challengeId)) return s;
           track('challenge_joined', { challengeId });
-          try { require('./achievements').useAchievementsStore.getState().checkAchievements(); } catch {}
+          appEvents.emit(APP_EVENTS.achievementsRecheck, undefined);
           return { joinedChallenges: [...s.joinedChallenges, { challengeId, joinedAt: new Date().toISOString(), progress: 0 }] };
         }),
 

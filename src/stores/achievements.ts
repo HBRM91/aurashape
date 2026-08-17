@@ -1,6 +1,15 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { appEvents, APP_EVENTS } from '@/src/lib/events';
+import { useDiaryStore } from './diary';
+import { useFastingStore } from './fasting';
+import { useWorkoutStore } from './workout';
+import { useMeditationStore } from './meditation';
+import { useCycleStore } from './cycle';
+import { useWaterStore } from './water';
+import { useRecipeStore } from './recipes';
+import { useCommunityStore } from './community';
 
 export interface Achievement {
   id: string;
@@ -47,15 +56,6 @@ export const useAchievementsStore = create<AchievementsState>()(
       achievements: DEFAULT_ACHIEVEMENTS,
 
       checkAchievements: () => {
-        const { useDiaryStore } = require('./diary');
-        const { useFastingStore } = require('./fasting');
-        const { useWorkoutStore } = require('./workout');
-        const { useMeditationStore } = require('./meditation');
-        const { useCycleStore } = require('./cycle');
-        const { useWaterStore } = require('./water');
-        const { useRecipeStore } = require('./recipes');
-        const { useCommunityStore } = require('./community');
-
         const diary = useDiaryStore.getState();
         const fasting = useFastingStore.getState();
         const workout = useWorkoutStore.getState();
@@ -133,3 +133,10 @@ export const useAchievementsStore = create<AchievementsState>()(
     }
   )
 );
+
+// Domain stores (diary, workout, fasting, ...) emit this event after any
+// action that might unlock or progress an achievement, instead of reaching
+// back into this module directly — see src/lib/events.ts for why.
+appEvents.on(APP_EVENTS.achievementsRecheck, () => {
+  useAchievementsStore.getState().checkAchievements();
+});

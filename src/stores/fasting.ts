@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/src/lib/analytics';
+import { appEvents, APP_EVENTS } from '@/src/lib/events';
 import type { FastingPlan } from '@/src/types';
 
 interface FastingSession {
@@ -81,7 +82,7 @@ export const useFastingStore = create<FastingState>()(
         const completed = { ...activeSession, endTime: now(), completed: true };
         set({ activeSession: null, history: [completed, ...history].slice(0, 90) });
         track('fast_completed', { targetHours: activeSession.targetHours, actualHours: durH });
-        try { require('./achievements').useAchievementsStore.getState().checkAchievements(); } catch {}
+        appEvents.emit(APP_EVENTS.achievementsRecheck, undefined);
       },
 
       getElapsedSeconds: () => {

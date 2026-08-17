@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { appEvents, APP_EVENTS } from '@/src/lib/events';
 import type { DietaryPreference } from '@/src/types';
 import type { Recipe } from '@/src/lib/recipes';
 import { suggestRecipesForMacros } from '@/src/lib/recipes';
@@ -29,7 +30,7 @@ export const useRecipeStore = create<RecipeState>()(
           const next = s.savedRecipes.includes(recipeId)
             ? s.savedRecipes.filter((id) => id !== recipeId)
             : [...s.savedRecipes, recipeId];
-          try { require('./achievements').useAchievementsStore.getState().checkAchievements(); } catch {}
+          appEvents.emit(APP_EVENTS.achievementsRecheck, undefined);
           return { savedRecipes: next };
         }),
 

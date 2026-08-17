@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/src/lib/analytics';
+import { appEvents, APP_EVENTS } from '@/src/lib/events';
 import type { MeditationSession, BreathingPattern } from '@/src/types';
 
 interface MeditationState {
@@ -56,7 +57,7 @@ export const useMeditationStore = create<MeditationState>()(
           lastSessionDate: today,
         });
         track('meditation_completed', { type: session.type, duration: session.durationMinutes });
-        try { require('./achievements').useAchievementsStore.getState().checkAchievements(); } catch {}
+        appEvents.emit(APP_EVENTS.achievementsRecheck, undefined);
       },
 
       getTotalSessions: () => get().sessions.length,

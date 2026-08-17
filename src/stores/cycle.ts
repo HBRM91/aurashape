@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/src/lib/analytics';
+import { appEvents, APP_EVENTS } from '@/src/lib/events';
 import type { CycleEntry, CyclePrediction } from '@/src/types';
 
 interface CycleState {
@@ -74,7 +75,7 @@ export const useCycleStore = create<CycleState>()(
         const id = String(entryId++);
         set((s) => ({ entries: [...s.entries, { ...entry, id }] }));
         track('cycle_logged');
-        try { require('./achievements').useAchievementsStore.getState().checkAchievements(); } catch {}
+        appEvents.emit(APP_EVENTS.achievementsRecheck, undefined);
       },
 
       updateEntry: (id, updates) => {
