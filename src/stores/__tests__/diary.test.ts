@@ -1,4 +1,5 @@
 import { useDiaryStore, migrateLegacyEntryIds } from '@/src/stores/diary';
+import { useSyncStore } from '@/src/stores/sync';
 import type { Food } from '@/src/types';
 
 const mockFood: Food = {
@@ -141,6 +142,25 @@ describe('Diary Store', () => {
       const entries = useDiaryStore.getState().entries;
       expect(entries).toHaveLength(1);
       expect(entries[0].food?.name).toBe('Brown Rice');
+    });
+
+    it('should sync a soft-delete (deleted_at), never a hard delete — the server RLS no longer permits one', () => {
+      process.env.EXPO_PUBLIC_DATA_MODE = 'cloud';
+      useSyncStore.setState({ queue: [], quarantined: [], lastSync: null, syncing: false });
+      try {
+        useDiaryStore.getState().addEntry(mockFood, 'breakfast');
+        const entryId = useDiaryStore.getState().entries[0].id;
+        useSyncStore.setState({ queue: [] }); // discard the insert enqueued by addEntry
+
+        useDiaryStore.getState().removeEntry(entryId);
+
+        const [item] = useSyncStore.getState().queue;
+        expect(item.action).toBe('update');
+        expect(item.payload.id).toBe(entryId);
+        expect(typeof item.payload.deleted_at).toBe('string');
+      } finally {
+        delete process.env.EXPO_PUBLIC_DATA_MODE;
+      }
     });
   });
 

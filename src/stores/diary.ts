@@ -91,7 +91,18 @@ export const useDiaryStore = create<DiaryState>()(
 
       removeEntry: (id) => {
         set((s) => ({ entries: s.entries.filter((e) => e.id !== id) }));
-        useSyncStore.getState().enqueue({ table: 'diary_entries', action: 'delete', payload: { id } });
+        // Soft-delete on the server (RLS no longer permits a client-issued
+        // hard DELETE on diary_entries — see
+        // supabase/migrations/202608170001_diary_soft_delete.sql): other
+        // devices only learn a row was removed by pulling a non-null
+        // deleted_at, which a hard DELETE could never signal. The local
+        // copy above is still removed immediately; only the server side
+        // needs a tombstone.
+        useSyncStore.getState().enqueue({
+          table: 'diary_entries',
+          action: 'update',
+          payload: { id, deleted_at: new Date().toISOString() },
+        });
       },
 
       copyFromDate: (fromDate) => {
