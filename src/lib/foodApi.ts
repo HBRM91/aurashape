@@ -1,6 +1,7 @@
 import { OPEN_FOOD_FACTS_API } from './constants';
 import type { Food } from '@/src/types';
 import { captureError } from '@/src/lib/sentry';
+import { searchLocalFoods } from '@/src/lib/localFoodSearch';
 
 interface OFFNutrients {
   'energy-kcal_100g'?: number;
@@ -98,20 +99,45 @@ function parseServingSize(serving?: string): number | undefined {
   return anyNumber ? parseFloat(anyNumber[0].replace(',', '.')) : undefined;
 }
 
+function normalizeForDedupe(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+// Local (USDA) results come first -- they're curated, always-available whole
+// foods, which is what most searches are for ("chicken breast", "banana").
+// OFF adds packaged/branded products on top, skipping any that are
+// effectively the same food already surfaced locally.
+export function mergeFoodResults(localResults: Food[], offResults: Food[]): Food[] {
+  const seen = new Set(localResults.map((food) => normalizeForDedupe(food.name)));
+  const dedupedOff = offResults.filter((food) => !seen.has(normalizeForDedupe(food.name)));
+  return [...localResults, ...dedupedOff];
+}
+
 export async function searchFoods(query: string, signal?: AbortSignal): Promise<Food[]> {
+  // Local search never touches the network, so kick it off unconditionally
+  // and merge it in regardless of how the OFF request turns out -- this is
+  // what makes food search actually work offline for the first time.
+  const localResultsPromise = searchLocalFoods(query).catch(() => [] as Food[]);
+
   try {
     const url = `${OPEN_FOOD_FACTS_API}/search?search_terms=${encodeURIComponent(query)}&fields=code,product_name,brands,nutriments,serving_size,image_url&page_size=20&sort_by=unique_scans_n`;
     const res = await fetch(url, { signal });
     if (!res.ok) throw new Error('Food search failed');
     const data: OFFSuggestionsResponse = await res.json();
     const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
-    return (data.products || [])
+    const offResults = (data.products || [])
       .filter((product) => {
         const name = `${product.product_name || ''} ${product.brands || ''}`.toLowerCase();
         return Boolean(product.product_name) && terms.every((term) => name.includes(term));
       })
       .map((p) => mapOFFProduct(p.code, p));
+    return mergeFoodResults(await localResultsPromise, offResults);
   } catch (err) {
+    // OFF is unreachable or failed -- degrade gracefully to local-only
+    // results instead of failing the whole search when we have something
+    // useful to show.
+    const localResults = await localResultsPromise;
+    if (localResults.length > 0) return localResults;
     captureError(err as Error, { context: 'searchFoods' });
     throw err;
   }

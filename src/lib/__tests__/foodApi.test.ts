@@ -1,4 +1,10 @@
-import { searchFoods } from '@/src/lib/foodApi';
+import { searchFoods, mergeFoodResults } from '@/src/lib/foodApi';
+import { searchLocalFoods } from '@/src/lib/localFoodSearch';
+import type { Food } from '@/src/types';
+
+jest.mock('@/src/lib/localFoodSearch');
+
+const searchLocalFoodsMock = searchLocalFoods as jest.MockedFunction<typeof searchLocalFoods>;
 
 describe('searchFoods', () => {
   const fetchMock = jest.fn();
@@ -6,6 +12,10 @@ describe('searchFoods', () => {
   beforeEach(() => {
     global.fetch = fetchMock;
     fetchMock.mockReset();
+    // Existing tests below exercise OFF mapping/filtering in isolation, so
+    // local search is a no-op unless a test explicitly opts in.
+    searchLocalFoodsMock.mockReset();
+    searchLocalFoodsMock.mockResolvedValue([]);
   });
 
   it('keeps relevant products and rejects unrelated results', async () => {
@@ -136,5 +146,66 @@ describe('searchFoods', () => {
       calories_per_serving: 250,
       protein_g: 10,
     }));
+  });
+
+  it('places local (USDA) results ahead of OFF results', async () => {
+    const localFood: Food = {
+      id: 'usda-1', name: 'Chicken, raw', serving_size_g: 100, serving_name: '100 g',
+      calories_per_serving: 120, protein_g: 22, carbs_g: 0, fat_g: 3, fiber_g: 0,
+      is_verified: true, is_aurabiosens: false, source: 'usda_sr_legacy',
+    };
+    searchLocalFoodsMock.mockResolvedValueOnce([localFood]);
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        products: [{ code: 'off-1', product_name: 'Chicken nuggets', nutriments: { 'energy-kcal_serving': 300 } }],
+      }),
+    });
+
+    const results = await searchFoods('chicken');
+
+    expect(results.map((f) => f.id)).toEqual(['usda-1', 'off-1']);
+  });
+
+  it('degrades gracefully to local-only results when OFF is unreachable', async () => {
+    const localFood: Food = {
+      id: 'usda-2', name: 'Rice, white', serving_size_g: 100, serving_name: '100 g',
+      calories_per_serving: 365, protein_g: 7, carbs_g: 80, fat_g: 0.7, fiber_g: 1.3,
+      is_verified: true, is_aurabiosens: false, source: 'usda_sr_legacy',
+    };
+    searchLocalFoodsMock.mockResolvedValueOnce([localFood]);
+    fetchMock.mockRejectedValueOnce(new Error('network unreachable'));
+
+    const results = await searchFoods('rice');
+
+    expect(results).toEqual([localFood]);
+  });
+
+  it('still throws when OFF fails and local search found nothing either', async () => {
+    searchLocalFoodsMock.mockResolvedValueOnce([]);
+    fetchMock.mockRejectedValueOnce(new Error('network unreachable'));
+
+    await expect(searchFoods('zzzznotarealfood')).rejects.toThrow('network unreachable');
+  });
+});
+
+describe('mergeFoodResults', () => {
+  const local: Food = {
+    id: 'usda-1', name: 'Banana, raw', serving_size_g: 100, serving_name: '100 g',
+    calories_per_serving: 89, protein_g: 1.1, carbs_g: 22.8, fat_g: 0.3, fiber_g: 2.6,
+    is_verified: true, is_aurabiosens: false, source: 'usda_sr_legacy',
+  };
+
+  it('drops an OFF result that duplicates a local result by name', () => {
+    const duplicateOff: Food = { ...local, id: 'off-dup', name: 'banana, RAW', source: 'open_food_facts' };
+    const uniqueOff: Food = { ...local, id: 'off-unique', name: 'Banana bread', source: 'open_food_facts' };
+
+    const merged = mergeFoodResults([local], [duplicateOff, uniqueOff]);
+
+    expect(merged.map((f) => f.id)).toEqual(['usda-1', 'off-unique']);
+  });
+
+  it('returns local results unchanged when there are no OFF results', () => {
+    expect(mergeFoodResults([local], [])).toEqual([local]);
   });
 });
