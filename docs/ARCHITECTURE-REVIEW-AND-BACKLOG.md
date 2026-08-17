@@ -19,6 +19,29 @@ MyFitnessPal, YAZIO and Freeletics, and a cost-minimal execution backlog.
 > Sections 0–11 remain valid for the defect catalog, cost model and phase content (W0/W1/W3/W4
 > are unchanged) — §12 tells you how the sequencing and monetization/brand epics change.
 
+## W0 Progress Log
+
+Shipped on `claude/app-architecture-backlog-yzb28x`, verified with a real `npm run check`
+(tsc + jest) after this environment got a working `node_modules` mid-session — not hand-traced:
+
+| ID | Status | Notes |
+|---|---|---|
+| FND-04 | ✅ Done | Analytics now uses the real posthog-react-native v4 instance API. |
+| FND-06 | ✅ Done | Foods without OFF serving data are scaled from 100g density, not mislabeled. |
+| FND-01 | ◐ ID-generation slice done | UUIDv7 + legacy-ID migration. Full repository-layer abstraction still deferred to when SQLite (FND-03) actually needs it. |
+| FND-05 | ✅ Done | `src/lib/events.ts` pub-sub replaces `require()`+swallowed-catch across 7 stores. |
+| FND-07 | ◐ Payload-shape slice done | `custom_food_macros` snapshot used instead of a fabricated `food_id`. No schema migration needed — RLS already permitted it. |
+| FND-02 | ◐ Write-path slice done | Outbox persisted, `processQueue` actually runs (on auth + foreground), all diary mutations enqueue, exponential backoff + quarantine (not silent data loss). **No pull path yet** — see below. |
+| FND-03, FND-08, FND-09 | 🔲 Not started | |
+
+**Open decision, needed before the sync pull path can be built:** a pull path requires
+distinguishing "never synced to this device" from "deleted on another device." That needs either
+a `deleted_at` soft-delete column on `diary_entries` (and eventually the other synced tables) or
+a separate tombstones table — a real schema migration, not a client-only fix. Flagging rather
+than deciding unilaterally: soft-delete columns are simpler and match Postgres/Supabase
+convention, but touch RLS policies and every existing query; a tombstones table is more isolated
+but adds a second table to keep in sync. Worth a short discussion before the next slice of FND-02.
+
 ---
 
 ## 0. Executive Summary
