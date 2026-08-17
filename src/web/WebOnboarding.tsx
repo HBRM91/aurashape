@@ -4,7 +4,12 @@ import { useOnboardingStore } from '@/src/stores/onboarding';
 import type { Goal, ActivityLevel, DietaryPreference, FastingSelection, UnitSystem } from '@/src/types';
 import { WebButton } from '@/src/web/WebButton';
 import { WEB_TOKENS } from '@/src/web/tokens';
-import { calculateTDEE, calculateMacros } from '@/src/lib/calculator';
+import { calculateTDEE, macrosFromCalories } from '@/src/lib/calculator';
+
+// Never suggest a calorie target below this, regardless of what weekly-loss
+// rate the user requests — a widely-used general floor for adults without
+// medical supervision (e.g. NHS dietary guidance).
+const MIN_SAFE_CALORIES = 1200;
 import { validateOnboardingForm, validateOnboardingStep } from '@/src/lib/onboardingValidation';
 import { ALLERGY_OPTIONS, DIETARY_OPTIONS } from '@/src/lib/dietaryProfile';
 import { FASTING_PLANS } from '@/src/lib/fastingPlans';
@@ -32,6 +37,7 @@ const ACTIVITY_LEVELS: { value: ActivityLevel; label: string; desc: string }[] =
 export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [showTimelineNotes, setShowTimelineNotes] = useState(false);
   const onboarding = useOnboardingStore();
   const [form, setForm] = useState({
     goal: onboarding.goal,
@@ -102,7 +108,8 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
     };
   };
 
-  function weeklyLossRisk(kgPerWeek: number): string | null {
+  function weeklyLossRisk(kgPerWeek: number, wasCapped: boolean): string | null {
+    if (wasCapped) return `That rate would drop you below a safe minimum, so your target is capped at ${MIN_SAFE_CALORIES} kcal/day. Going lower than this without medical supervision isn't recommended.`;
     if (kgPerWeek <= 0.5) return null;
     if (kgPerWeek <= 0.75) return 'Moderate loss may increase hunger and fatigue. Monitor how you feel.';
     if (kgPerWeek <= 1.0) return 'Rapid loss risks muscle loss, nutrient gaps, and gallstones. Professional guidance is recommended.';
@@ -125,19 +132,24 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
       ? (form.unitSystem === 'imperial' ? lbToKg(Number(form.weeklyChange)) : Number(form.weeklyChange))
       : 0;
     const dailyDeficit = goal === 'lose_weight' && weeklyKg > 0 ? Math.round(weeklyKg * 7700 / 7) : 0;
-    const targetCalories = goal === 'lose_weight' && dailyDeficit > 0
+    const rawTargetCalories = goal === 'lose_weight' && dailyDeficit > 0
       ? tdee - dailyDeficit
       : goal === 'build_muscle' ? tdee + 300
       : tdee;
-    const macros = calculateMacros(targetCalories, goal, w);
+    const targetCalories = Math.max(rawTargetCalories, MIN_SAFE_CALORIES);
+    const wasCapped = rawTargetCalories < MIN_SAFE_CALORIES;
+    // macrosFromCalories, not calculateMacros: targetCalories above already
+    // has the goal's deficit/surplus applied — calculateMacros would apply
+    // its own fixed -500/+300 on top and silently double it.
+    const macros = macrosFromCalories(targetCalories, w);
     return {
       tdee: `${tdee} kcal`,
-      deficit: dailyDeficit,
+      deficit: tdee - targetCalories,
       calories: macros.calorieTarget,
       protein: macros.proteinG,
       carbs: macros.carbsG,
       fat: macros.fatG,
-      risk: weeklyLossRisk(weeklyKg),
+      risk: weeklyLossRisk(weeklyKg, wasCapped),
     };
   };
 
@@ -147,8 +159,8 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
       setValidationErrors(errors);
       return;
     }
-    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      setValidationErrors({ email: 'A valid email is required to receive your weekly tips.' });
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setValidationErrors({ email: 'Please enter a valid email address, or leave it blank.' });
       return;
     }
     onboarding.setField('goal', form.goal);
@@ -308,7 +320,6 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
                     <Text style={{ ...WEB_TOKENS.typography.display, color: WEB_TOKENS.colors.primary }}>{s.calories}</Text>
                     <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.textMuted }}>kcal{form.goal === 'lose_weight' && s.deficit > 0 ? ` · deficit: ${s.deficit} kcal/day` : ''} · TDEE: {s.tdee}</Text>
                   </View>
-                  {s.risk ? <View style={{ padding: 12, borderRadius: WEB_TOKENS.radii.md, backgroundColor: WEB_TOKENS.colors.errorSurface, borderWidth: 1, borderColor: WEB_TOKENS.colors.errorBorder }}><Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.error }}>{s.risk}</Text></View> : null}
                   {projection.length > 1 ? <View style={{ padding: 14, borderRadius: WEB_TOKENS.radii.md, backgroundColor: WEB_TOKENS.colors.secondary }}><Text style={{ ...WEB_TOKENS.typography.label, color: WEB_TOKENS.colors.primary }}>Estimated target date</Text><Text style={{ ...WEB_TOKENS.typography.subheading, color: WEB_TOKENS.colors.text, marginTop: 4 }}>{projection.at(-1)?.date}</Text><Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.textMuted, marginTop: 4 }}>{projection.length - 1} weeks at your selected rate. This is a projection, not a promise.</Text></View> : null}
                   <View style={{ flexDirection: 'row', gap: 12 }}>
                     <View style={{ flex: 1, padding: 12, borderRadius: WEB_TOKENS.radii.md, backgroundColor: '#EFF6FF', alignItems: 'center' }}>
@@ -324,9 +335,29 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
                       <Text style={{ ...WEB_TOKENS.typography.caption, color: '#DB2777' }}>Fat</Text>
                     </View>
                   </View>
-                  {form.fastingPlan && form.fastingPlan !== 'custom' && (
-                    <View style={{ padding: 12, borderRadius: WEB_TOKENS.radii.md, backgroundColor: WEB_TOKENS.colors.surface, borderWidth: 1, borderColor: WEB_TOKENS.colors.border, alignItems: 'center' }}>
-                      <Text style={{ ...WEB_TOKENS.typography.label, color: WEB_TOKENS.colors.textMuted }}>Fasting: {form.fastingPlan}</Text>
+                  {(s.risk || (form.fastingPlan && form.fastingPlan !== 'none')) && (
+                    <View style={{ width: '100%' }}>
+                      <TouchableOpacity
+                        accessibilityRole="button"
+                        accessibilityState={{ expanded: showTimelineNotes }}
+                        onPress={() => setShowTimelineNotes((v) => !v)}
+                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, padding: 10, borderRadius: WEB_TOKENS.radii.md, backgroundColor: s.risk ? WEB_TOKENS.colors.errorSurface : WEB_TOKENS.colors.surface, borderWidth: 1, borderColor: s.risk ? WEB_TOKENS.colors.errorBorder : WEB_TOKENS.colors.border }}
+                      >
+                        <Text style={{ ...WEB_TOKENS.typography.label, color: s.risk ? WEB_TOKENS.colors.error : WEB_TOKENS.colors.textMuted }}>
+                          {s.risk ? '⚠️ Important info' : 'ℹ️ Fasting notes'}
+                        </Text>
+                        <Text style={{ ...WEB_TOKENS.typography.caption, color: s.risk ? WEB_TOKENS.colors.error : WEB_TOKENS.colors.textMuted }}>
+                          {showTimelineNotes ? '▲' : '▼'}
+                        </Text>
+                      </TouchableOpacity>
+                      {showTimelineNotes && (
+                        <View style={{ marginTop: 8, padding: 12, borderRadius: WEB_TOKENS.radii.md, backgroundColor: WEB_TOKENS.colors.surface, borderWidth: 1, borderColor: WEB_TOKENS.colors.border, gap: 8 }}>
+                          {s.risk ? <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.error }}>{s.risk}</Text> : null}
+                          {form.fastingPlan && form.fastingPlan !== 'none' ? (
+                            <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.textMuted }}>Fasting plan: {form.fastingPlan}. {FASTING_PLANS[form.fastingPlan as keyof typeof FASTING_PLANS]?.safety}</Text>
+                          ) : null}
+                        </View>
+                      )}
                     </View>
                   )}
                 </View>
@@ -341,10 +372,10 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
       {step === 5 && (
         <View style={{ maxWidth: 400, alignSelf: 'center', width: '100%', alignItems: 'center' }}>
           <Text style={{ ...WEB_TOKENS.typography.heading, color: WEB_TOKENS.colors.text, marginBottom: 8 }}>Weekly Science Tips</Text>
-          <Text style={{ ...WEB_TOKENS.typography.body, color: WEB_TOKENS.colors.textMuted, marginBottom: 24, textAlign: 'center' }}>Get evidence-based health tips every Friday to support your journey. Unsubscribe anytime.</Text>
-          <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.textMuted, marginBottom: 6, alignSelf: 'stretch' }}>Email address *</Text>
+          <Text style={{ ...WEB_TOKENS.typography.body, color: WEB_TOKENS.colors.textMuted, marginBottom: 24, textAlign: 'center' }}>Optional — get evidence-based health tips every Friday. Unsubscribe anytime, and you can skip this and add it later from your profile.</Text>
+          <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.textMuted, marginBottom: 6, alignSelf: 'stretch' }}>Email address (optional)</Text>
           <TextInput style={{ width: '100%', padding: 12, borderRadius: WEB_TOKENS.radii.sm, backgroundColor: WEB_TOKENS.colors.surface, borderWidth: 1, borderColor: form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? WEB_TOKENS.colors.errorBorder : WEB_TOKENS.colors.border, color: WEB_TOKENS.colors.text, marginBottom: 16 }} value={form.email} onChangeText={(v) => update('email', v)} placeholder="your@email.com" placeholderTextColor={WEB_TOKENS.colors.textMuted} keyboardType="email-address" autoCapitalize="none" />
-          {form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.error, marginTop: -8, marginBottom: 12, alignSelf: 'stretch' }}>Please enter a valid email address.</Text> : null}
+          {form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.error, marginTop: -8, marginBottom: 12, alignSelf: 'stretch' }}>Please enter a valid email address, or leave it blank.</Text> : null}
         </View>
       )}
 

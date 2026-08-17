@@ -30,6 +30,25 @@ export function calculateTDEE(metrics: BodyMetrics, activity: ActivityLevel): nu
   return Math.round(bmrMifflinStJeor(metrics) * ACTIVITY_MULTIPLIERS[activity]);
 }
 
+/**
+ * Splits an already-decided calorie target into protein/fat/carb grams.
+ * Use this directly (not calculateMacros) when the caller has already
+ * computed its own calorie target — e.g. from a user-chosen weekly rate of
+ * change — since calculateMacros applies its own fixed deficit/surplus on
+ * top of whatever TDEE it's given. Passing an already-deficited number into
+ * calculateMacros double-applies the deficit (see
+ * docs/ARCHITECTURE-REVIEW-AND-BACKLOG.md for the bug this fixes).
+ */
+export function macrosFromCalories(calorieTarget: number, bodyWeightKg: number): MacroTargets {
+  const rounded = Math.round(calorieTarget);
+  const proteinG = Math.round(bodyWeightKg * 2.0);
+  const fatG = Math.round((rounded * 0.25) / 9);
+  const remainingCal = rounded - proteinG * 4 - fatG * 9;
+  const carbsG = Math.round(Math.max(remainingCal / 4, 0));
+
+  return { calorieTarget: rounded, proteinG, carbsG, fatG };
+}
+
 export function calculateMacros(tdee: number, goal: Goal, bodyWeightKg: number): MacroTargets {
   let calorieTarget: number;
 
@@ -47,12 +66,7 @@ export function calculateMacros(tdee: number, goal: Goal, bodyWeightKg: number):
       break;
   }
 
-  const proteinG = Math.round(bodyWeightKg * 2.0);
-  const fatG = Math.round((calorieTarget * 0.25) / 9);
-  const remainingCal = calorieTarget - proteinG * 4 - fatG * 9;
-  const carbsG = Math.round(Math.max(remainingCal / 4, 0));
-
-  return { calorieTarget, proteinG, carbsG, fatG };
+  return macrosFromCalories(calorieTarget, bodyWeightKg);
 }
 
 export interface BMIResult {

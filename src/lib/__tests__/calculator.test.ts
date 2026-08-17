@@ -1,4 +1,4 @@
-import { calculateBMI, estimateBodyFatPct, calculateTDEE, calculateMacros, getWeightProgress } from '@/src/lib/calculator';
+import { calculateBMI, estimateBodyFatPct, calculateTDEE, calculateMacros, macrosFromCalories, getWeightProgress } from '@/src/lib/calculator';
 import type { ActivityLevel, Goal } from '@/src/types';
 
 describe('calculator', () => {
@@ -101,6 +101,36 @@ describe('calculator', () => {
 
     it('should never return negative carbs', () => {
       const result = calculateMacros(1000, 'lose_weight', 100);
+      expect(result.carbsG).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  describe('macrosFromCalories', () => {
+    it('splits an already-decided calorie target without applying any further deficit or surplus', () => {
+      // This is the exact bug this function exists to prevent: a caller
+      // that has already computed its own calorie target (e.g. from a
+      // user-chosen weekly rate of change) must not have calculateMacros's
+      // fixed -500/+300 applied again on top.
+      const result = macrosFromCalories(1383, 80);
+      expect(result.calorieTarget).toBe(1383);
+    });
+
+    it('matches calculateMacros\'s split for the same final calorie number', () => {
+      // calculateMacros(2500, 'maintain', 80) applies zero deficit, so its
+      // output should be identical to calling macrosFromCalories directly
+      // with that same 2500 target.
+      const viaCalculateMacros = calculateMacros(2500, 'maintain', 80);
+      const viaMacrosFromCalories = macrosFromCalories(2500, 80);
+      expect(viaMacrosFromCalories).toEqual(viaCalculateMacros);
+    });
+
+    it('rounds a fractional calorie target', () => {
+      const result = macrosFromCalories(1383.7, 80);
+      expect(result.calorieTarget).toBe(1384);
+    });
+
+    it('never returns negative carbs even at a very low calorie target', () => {
+      const result = macrosFromCalories(1200, 100);
       expect(result.carbsG).toBeGreaterThanOrEqual(0);
     });
   });
