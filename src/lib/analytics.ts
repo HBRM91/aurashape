@@ -1,38 +1,41 @@
+import { PostHog } from 'posthog-react-native';
 import { POSTHOG_KEY } from './constants';
 import { isLocalOnly } from './privacyMode';
+import { captureError } from './sentry';
 
-let enabled = false;
+let client: PostHog | null = null;
 
 export async function initAnalytics() {
   if (isLocalOnly()) return;
   if (!POSTHOG_KEY || POSTHOG_KEY === 'your-posthog-key') return;
   try {
-    const PostHogLib = require('posthog-react-native');
-    await PostHogLib.PostHog.setup(POSTHOG_KEY, {
+    client = new PostHog(POSTHOG_KEY, {
       host: 'https://eu.i.posthog.com',
-      captureApplicationLifecycleEvents: true,
-      captureDeepLinks: false,
+      captureAppLifecycleEvents: true,
     });
-    enabled = true;
-  } catch {
-    enabled = false;
+  } catch (err) {
+    client = null;
+    if (__DEV__) console.warn('[analytics] init failed, events will not be captured', err);
+    captureError(err as Error, { context: 'initAnalytics' });
   }
 }
 
 export function track(event: string, properties?: Record<string, unknown>) {
-  if (isLocalOnly() || !enabled) return;
+  if (isLocalOnly() || !client) return;
   try {
-    const PostHogLib = require('posthog-react-native');
-    PostHogLib.PostHog.capture(event, properties);
-  } catch {}
+    client.capture(event, properties);
+  } catch (err) {
+    if (__DEV__) console.warn('[analytics] capture failed', event, err);
+  }
 }
 
 export function identifyUser(userId: string, email: string) {
-  if (isLocalOnly() || !enabled) return;
+  if (isLocalOnly() || !client) return;
   try {
-    const PostHogLib = require('posthog-react-native');
-    PostHogLib.PostHog.identify(userId, { email });
-  } catch {}
+    client.identify(userId, { email });
+  } catch (err) {
+    if (__DEV__) console.warn('[analytics] identify failed', err);
+  }
 }
 
 export function trackScreen(screenName: string) {
