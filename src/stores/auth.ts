@@ -4,6 +4,7 @@ import { sendWelcomeEmail } from '@/src/lib/email';
 import type { Session, User } from '@supabase/supabase-js';
 import { isLocalOnly } from '@/src/lib/privacyMode';
 import { clearLocalUserData } from '@/src/lib/localData';
+import { useSyncStore } from './sync';
 
 interface AuthState {
   session: Session | null;
@@ -102,6 +103,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   signOut: async () => {
     if (!isLocalOnly()) await supabase.auth.signOut();
     await clearLocalUserData();
+    useSyncStore.getState().resetSync();
     set({ session: null, user: null });
   },
 
