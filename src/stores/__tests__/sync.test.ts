@@ -1,10 +1,18 @@
 const mockInsert = jest.fn();
 const mockUpdateEq = jest.fn();
 const mockDeleteEq = jest.fn();
+const mockOrder = jest.fn();
 const mockFrom = jest.fn(() => ({
   insert: (...args: unknown[]) => mockInsert(...args),
   update: jest.fn(() => ({ eq: (...args: unknown[]) => mockUpdateEq(...args) })),
   delete: jest.fn(() => ({ eq: (...args: unknown[]) => mockDeleteEq(...args) })),
+  select: jest.fn(() => ({
+    eq: jest.fn(() => ({
+      gt: jest.fn((...args: unknown[]) => ({
+        order: (...orderArgs: unknown[]) => mockOrder(...args, ...orderArgs),
+      })),
+    })),
+  })),
 }));
 
 jest.mock('@/src/lib/supabase', () => ({
@@ -14,15 +22,22 @@ jest.mock('@/src/lib/supabase', () => ({
 const mockCaptureError = jest.fn();
 jest.mock('@/src/lib/sentry', () => ({ captureError: mockCaptureError }));
 
+const mockEmit = jest.fn();
+jest.mock('@/src/lib/events', () => ({
+  appEvents: { emit: (...args: unknown[]) => mockEmit(...args), on: jest.fn() },
+  APP_EVENTS: { achievementsRecheck: 'achievements:recheck', syncPulled: 'sync:pulled' },
+}));
+
 import { useSyncStore } from '@/src/stores/sync';
 
 beforeEach(() => {
   jest.clearAllMocks();
   process.env.EXPO_PUBLIC_DATA_MODE = 'cloud';
-  useSyncStore.setState({ queue: [], quarantined: [], lastSync: null, syncing: false });
+  useSyncStore.setState({ queue: [], quarantined: [], lastPullAt: {}, lastSync: null, syncing: false });
   mockInsert.mockResolvedValue({ error: null });
   mockUpdateEq.mockResolvedValue({ error: null });
   mockDeleteEq.mockResolvedValue({ error: null });
+  mockOrder.mockResolvedValue({ data: [], error: null });
 });
 
 afterEach(() => {
@@ -205,6 +220,65 @@ describe('sync store', () => {
       await new Promise((resolve) => setImmediate(resolve));
       expect(mockFrom).toHaveBeenCalled();
       cleanup();
+    });
+  });
+
+  describe('pullChanges', () => {
+    it('does nothing in local-only mode', async () => {
+      delete process.env.EXPO_PUBLIC_DATA_MODE;
+      await useSyncStore.getState().pullChanges('user-1');
+      expect(mockFrom).not.toHaveBeenCalled();
+    });
+
+    it('queries with the epoch as the cursor on a first-ever pull', async () => {
+      await useSyncStore.getState().pullChanges('user-1');
+      expect(mockOrder).toHaveBeenCalledWith(
+        'updated_at', '1970-01-01T00:00:00.000Z', 'updated_at', { ascending: true }
+      );
+    });
+
+    it('emits sync:pulled with the fetched rows when there are any', async () => {
+      const rows = [{ id: 'e1', updated_at: '2026-01-15T10:00:00.000Z' }];
+      mockOrder.mockResolvedValueOnce({ data: rows, error: null });
+
+      await useSyncStore.getState().pullChanges('user-1');
+
+      expect(mockEmit).toHaveBeenCalledWith('sync:pulled', { table: 'diary_entries', rows });
+    });
+
+    it('does not emit when there are no changed rows', async () => {
+      mockOrder.mockResolvedValueOnce({ data: [], error: null });
+      await useSyncStore.getState().pullChanges('user-1');
+      expect(mockEmit).not.toHaveBeenCalled();
+    });
+
+    it('advances the cursor to the latest row updated_at after a successful pull', async () => {
+      mockOrder.mockResolvedValueOnce({
+        data: [
+          { id: 'e1', updated_at: '2026-01-15T10:00:00.000Z' },
+          { id: 'e2', updated_at: '2026-01-15T12:00:00.000Z' },
+        ],
+        error: null,
+      });
+
+      await useSyncStore.getState().pullChanges('user-1');
+
+      expect(useSyncStore.getState().lastPullAt.diary_entries).toBe('2026-01-15T12:00:00.000Z');
+    });
+
+    it('uses the stored cursor (not the epoch) on a subsequent pull', async () => {
+      useSyncStore.setState({ lastPullAt: { diary_entries: '2026-01-15T09:00:00.000Z' } });
+      await useSyncStore.getState().pullChanges('user-1');
+      expect(mockOrder).toHaveBeenCalledWith(
+        'updated_at', '2026-01-15T09:00:00.000Z', 'updated_at', { ascending: true }
+      );
+    });
+
+    it('does not advance the cursor when the fetch fails, so the same window is retried next time', async () => {
+      mockOrder.mockResolvedValueOnce({ data: null, error: { message: 'network down' } });
+      await useSyncStore.getState().pullChanges('user-1');
+      expect(useSyncStore.getState().lastPullAt.diary_entries).toBeUndefined();
+      expect(mockCaptureError).toHaveBeenCalled();
     });
   });
 });

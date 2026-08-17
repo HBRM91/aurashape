@@ -3,8 +3,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/src/lib/analytics';
 import { generateId, isLegacyId } from '@/src/lib/id';
-import { appEvents, APP_EVENTS } from '@/src/lib/events';
-import { mapDiaryEntryToPayload } from '@/src/lib/syncMappers';
+import { appEvents, APP_EVENTS, type SyncPulledPayload } from '@/src/lib/events';
+import { mapDiaryEntryToPayload, mapPayloadToDiaryEntry } from '@/src/lib/syncMappers';
 import { useSyncStore } from './sync';
 import type { DiaryEntry, Food, MealSlot } from '@/src/types';
 
@@ -38,6 +38,38 @@ interface DiaryState {
  */
 export function migrateLegacyEntryIds(entries: DiaryEntry[]): DiaryEntry[] {
   return entries.map((entry) => (isLegacyId(entry.id) ? { ...entry, id: generateId() } : entry));
+}
+
+/**
+ * Applies rows pulled from the server (sync.ts::pullChanges) to the local
+ * entries array: a row carrying deleted_at removes the matching local
+ * entry (the tombstone from another device's soft-delete); otherwise the
+ * row is upserted. An id present in `pendingIds` (still sitting in this
+ * device's own outbound queue) is skipped entirely — applying a pulled row
+ * for an id with an in-flight local edit would silently clobber that edit
+ * with a version that hasn't seen it yet. It's applied on the next pull,
+ * once the local edit has actually synced through.
+ */
+export function applyPulledDiaryRows(
+  entries: DiaryEntry[],
+  rows: Array<Record<string, unknown>>,
+  pendingIds: Set<string>
+): DiaryEntry[] {
+  let result = entries;
+  for (const row of rows) {
+    const id = row.id as string;
+    if (pendingIds.has(id)) continue;
+
+    if (row.deleted_at) {
+      result = result.filter((e) => e.id !== id);
+      continue;
+    }
+
+    const incoming = mapPayloadToDiaryEntry(row);
+    const idx = result.findIndex((e) => e.id === id);
+    result = idx === -1 ? [...result, incoming] : result.map((e) => (e.id === id ? incoming : e));
+  }
+  return result;
 }
 
 function makeEntry(food: Food, slot: MealSlot, date: string, servings: number): DiaryEntry {
@@ -167,3 +199,16 @@ export const useDiaryStore = create<DiaryState>()(
     }
   )
 );
+
+// sync.ts::pullChanges fetches rows for every table in SYNCED_TABLES and
+// emits them generically — it doesn't know what a diary_entries row means.
+// This is the diary-specific half: apply pulled rows to the local entries.
+appEvents.on<SyncPulledPayload>(APP_EVENTS.syncPulled, ({ table, rows }) => {
+  if (table !== 'diary_entries') return;
+  const pendingIds = new Set(
+    useSyncStore.getState().queue.map((item) => item.payload.id as string)
+  );
+  useDiaryStore.setState((s) => ({
+    entries: applyPulledDiaryRows(s.entries, rows, pendingIds),
+  }));
+});

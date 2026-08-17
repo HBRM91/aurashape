@@ -44,4 +44,17 @@ export const appEvents = new EventBus();
 export const APP_EVENTS = {
   /** Emitted after any user action that might unlock or progress an achievement. */
   achievementsRecheck: 'achievements:recheck',
+  /**
+   * Emitted by sync.ts::pullChanges after fetching rows changed on the
+   * server for a given table. sync.ts stays generic (it doesn't know what a
+   * `diary_entries` row means) and diary.ts subscribes to apply the rows
+   * that belong to it — the same reason achievementsRecheck exists, to
+   * avoid sync.ts having to import every domain store directly.
+   */
+  syncPulled: 'sync:pulled',
 } as const;
+
+export interface SyncPulledPayload {
+  table: string;
+  rows: Array<Record<string, unknown>>;
+}
