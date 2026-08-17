@@ -8,6 +8,7 @@ import { isLocalOnly } from '@/src/lib/privacyMode';
 import { initSentry } from '@/src/lib/sentry';
 import { initAnalytics, identifyUser } from '@/src/lib/analytics';
 import { initPushNotifications, savePushToken } from '@/src/lib/notifications';
+import { useSyncStore } from '@/src/stores/sync';
 import { Stack, usePathname, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, View, type ViewStyle } from 'react-native';
@@ -35,6 +36,11 @@ export default function RootLayout() {
     initPushNotifications().then((token) => {
       if (token) savePushToken(user.id, token);
     }).catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    return useSyncStore.getState().initSync(user.id);
   }, [user]);
 
   useEffect(() => {

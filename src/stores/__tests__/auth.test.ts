@@ -1,6 +1,7 @@
 const mockGetSession = jest.fn();
 const mockOnAuthStateChange = jest.fn();
 const mockSignUp = jest.fn();
+const mockSignOut = jest.fn();
 let authStateCallback: ((event: string, session: unknown) => void) | undefined;
 
 jest.mock('@/src/lib/supabase', () => ({
@@ -9,12 +10,14 @@ jest.mock('@/src/lib/supabase', () => ({
       getSession: mockGetSession,
       onAuthStateChange: mockOnAuthStateChange,
       signUp: mockSignUp,
+      signOut: mockSignOut,
     },
   },
   AUTH_REDIRECT_URL: 'aurashape://auth/callback',
 }));
 
 import { useAuthStore } from '@/src/stores/auth';
+import { useSyncStore } from '@/src/stores/sync';
 
 describe('auth initialization', () => {
   beforeEach(() => {
@@ -22,6 +25,7 @@ describe('auth initialization', () => {
     mockGetSession.mockReset();
     mockOnAuthStateChange.mockReset();
     mockSignUp.mockReset();
+    mockSignOut.mockReset().mockResolvedValue({ error: null });
     authStateCallback = undefined;
     useAuthStore.setState({
       session: null,
@@ -76,5 +80,22 @@ describe('auth initialization', () => {
     const result = await useAuthStore.getState().signUp('person@example.com', 'Password1');
 
     expect(result).toEqual({ needsEmailConfirmation: true });
+  });
+
+  it('resets sync state on sign out, so a second account on the same device never inherits a stale queue', async () => {
+    // sync.ts state is a process-lifetime singleton, not tied to any one
+    // account — without an explicit reset, an item queued while signed in
+    // as user A would still be in memory (and eligible to sync) after
+    // switching to user B on the same device.
+    useSyncStore.setState({
+      queue: [{ id: 'x', table: 'diary_entries', action: 'insert', payload: {}, timestamp: 0, attempts: 0, nextRetryAt: 0 }],
+      quarantined: [{ id: 'y', table: 'diary_entries', action: 'insert', payload: {}, timestamp: 0, attempts: 5, nextRetryAt: 0 }],
+      lastSync: 12345,
+    });
+
+    await useAuthStore.getState().signOut();
+
+    expect(useSyncStore.getState().queue).toHaveLength(0);
+    expect(useSyncStore.getState().quarantined).toHaveLength(0);
   });
 });

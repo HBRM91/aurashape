@@ -86,10 +86,12 @@ export const useDiaryStore = create<DiaryState>()(
         set((s) => ({
           entries: s.entries.map((e) => (e.id === id ? { ...e, servings } : e)),
         }));
+        useSyncStore.getState().enqueue({ table: 'diary_entries', action: 'update', payload: { id, servings } });
       },
 
       removeEntry: (id) => {
         set((s) => ({ entries: s.entries.filter((e) => e.id !== id) }));
+        useSyncStore.getState().enqueue({ table: 'diary_entries', action: 'delete', payload: { id } });
       },
 
       copyFromDate: (fromDate) => {
@@ -101,6 +103,9 @@ export const useDiaryStore = create<DiaryState>()(
           date: selectedDate,
         }));
         set((s) => ({ entries: [...s.entries, ...cloned] }));
+        cloned.forEach((entry) => {
+          useSyncStore.getState().enqueue({ table: 'diary_entries', action: 'insert', payload: mapDiaryEntryToPayload(entry) });
+        });
       },
 
       getEntriesBySlot: (date, slot) => {
