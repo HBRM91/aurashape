@@ -85,12 +85,12 @@ describe('web navigation', () => {
 
     const { getByRole } = await render(<WebSidebar />);
 
-    expect(StyleSheet.flatten(getByRole('link', { name: 'Navigate to Diary' }).props.style)).toEqual(
+    expect(StyleSheet.flatten(getByRole('link', { name: 'Diary' }).props.style)).toEqual(
       expect.objectContaining({ backgroundColor: expect.any(String) }),
     );
 
     for (const item of NAV_ITEMS) {
-      await fireEvent.press(getByRole('link', { name: `Navigate to ${item.label}` }));
+      await fireEvent.press(getByRole('link', { name: item.label }));
     }
 
     expect(push).toHaveBeenCalledWith('/(tabs)');

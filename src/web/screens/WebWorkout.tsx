@@ -7,8 +7,8 @@ import {
   TextInput,
   Alert,
   StyleSheet,
-  useWindowDimensions,
 } from 'react-native';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { useWorkoutStore, type WorkoutHistoryEntry } from '@/src/stores/workout';
 import { useWorkoutPlanStore } from '@/src/stores/workoutPlan';
 import {
@@ -36,8 +36,7 @@ export function WebWorkout() {
     try { require('@/src/lib/analytics').trackScreen('workout'); } catch {}
   }, []);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
 
   const {
     activeWorkout,

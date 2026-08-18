@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { usePathname } from 'expo-router';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { getWebTokens, WEB_TOKENS } from './tokens';
 import { WebSidebar } from './WebSidebar';
 import { WebTopBar } from './WebTopBar';
@@ -14,9 +15,8 @@ export interface WebAppShellProps {
 }
 
 export function WebAppShell({ children, title }: WebAppShellProps) {
-  const { width } = useWindowDimensions();
   const pathname = usePathname();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
   const tokens = getWebTokens(useIsDark());
 
   if (Platform.OS !== 'web') {

@@ -7,8 +7,8 @@ import {
   TextInput,
   Alert,
   StyleSheet,
-  useWindowDimensions,
 } from 'react-native';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { useCommunityStore, type ForumThread } from '@/src/stores/community';
 import { WebCard } from '../WebCard';
 import { WebButton } from '../WebButton';
@@ -38,8 +38,7 @@ export function WebCommunity() {
     try { require('@/src/lib/analytics').trackScreen('community'); } catch {}
   }, []);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
   const tokens = getWebTokens(useIsDark());
 
   const {

@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { router } from 'expo-router';
 import { WEB_TOKENS } from './tokens';
 
@@ -67,8 +68,7 @@ const ACTIONS: ActionItem[] = [
 ];
 
 export function QuickActionGrid() {
-  const { width } = useWindowDimensions();
-  const columns = width >= 768 ? 3 : 2;
+  const columns = useIsDesktop() ? 3 : 2;
 
   return (
     <View style={styles.container}>

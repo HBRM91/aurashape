@@ -4,8 +4,8 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  useWindowDimensions,
 } from 'react-native';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { usePlanStore } from '@/src/stores/plan';
 import { useOnboardingStore } from '@/src/stores/onboarding';
 import { WebCard } from './WebCard';
@@ -24,8 +24,7 @@ function isToday(dateStr: string): boolean {
 }
 
 export function WeeklyPlan() {
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
 
   const currentPlan = usePlanStore((s) => s.currentPlan);
   const completion = usePlanStore((s) => s.getWeeklyCompletion());

@@ -1,4 +1,5 @@
-import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions, type ViewStyle } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { useRouter } from 'expo-router';
 import { getWebTokens, WEB_TOKENS } from './tokens';
 import { useAuthStore } from '@/src/stores/auth';
@@ -9,8 +10,7 @@ export interface WebTopBarProps {
 }
 
 export function WebTopBar({ title }: WebTopBarProps) {
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
   const user = useAuthStore((s) => s.user);
   const tokens = getWebTokens(useIsDark());
   const router = useRouter();

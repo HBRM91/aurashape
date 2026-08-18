@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { router } from 'expo-router';
 import { Svg, Polyline, Circle, Line } from 'react-native-svg';
 import { getWebTokens, WEB_TOKENS } from './tokens';
@@ -39,8 +40,7 @@ function computeStreak(entries: { date: string }[]): number {
 }
 
 export function HomeDashboard() {
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
   const tokens = getWebTokens(useIsDark());
 
   const user = useAuthStore((s) => s.user);

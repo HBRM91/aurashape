@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
-  useWindowDimensions,
 } from 'react-native';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { useCommentStore } from '@/src/stores/comments';
 import type { Comment } from '@/src/stores/comments';
 import { WebCard } from '../WebCard';
@@ -187,8 +187,7 @@ export function WebLearn() {
     try { require('@/src/lib/analytics').trackScreen('articles'); } catch {}
   }, []);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
   const tokens = getWebTokens(useIsDark());
 
   const { addComment, likeComment, articleComments } = useCommentStore();
