@@ -5,8 +5,8 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  useWindowDimensions,
 } from 'react-native';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { useFastingStore } from '@/src/stores/fasting';
 import type { FastingPlan } from '@/src/types';
 import { WebCard } from '../WebCard';
@@ -36,8 +36,7 @@ export function WebFasting() {
     try { require('@/src/lib/analytics').trackScreen('fasting'); } catch {}
   }, []);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
   const tokens = getWebTokens(useIsDark());
 
   const {

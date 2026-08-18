@@ -1,6 +1,7 @@
 import { createElement, useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, useWindowDimensions, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Platform } from 'react-native';
 import { useOnboardingStore } from '@/src/stores/onboarding';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import type { Goal, ActivityLevel, DietaryPreference, FastingSelection, UnitSystem } from '@/src/types';
 import { WebButton } from '@/src/web/WebButton';
 import { WEB_TOKENS } from '@/src/web/tokens';
@@ -58,8 +59,7 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
     weeklyChange: onboarding.weeklyChangeKg?.toString() || '',
     email: '',
   });
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
 
   const update = (key: string, value: unknown) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -84,14 +84,35 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
       const height = Number(current.height);
       const weight = Number(current.weight);
       const target = Number(current.targetWeight);
+      const weeklyChange = Number(current.weeklyChange);
       return {
         ...current,
         unitSystem: nextUnit,
         height: height > 0 ? String(nextUnit === 'imperial' ? cmToIn(height) : inToCm(height)) : current.height,
         weight: weight > 0 ? String(nextUnit === 'imperial' ? kgToLb(weight) : lbToKg(weight)) : current.weight,
         targetWeight: target > 0 ? String(nextUnit === 'imperial' ? kgToLb(target) : lbToKg(target)) : current.targetWeight,
+        // Previously left unconverted: switching units after entering a
+        // weekly-loss rate kept the same raw number but silently changed
+        // what unit it meant (0.5 kg/week became "0.5 lb/week").
+        weeklyChange: weeklyChange > 0 ? String(nextUnit === 'imperial' ? kgToLb(weeklyChange) : lbToKg(weeklyChange)) : current.weeklyChange,
       };
     });
+  };
+
+  const selectGoal = (goal: Goal) => {
+    setForm((current) => ({
+      ...current,
+      goal,
+      // Choosing "Lose Weight" but leaving the weekly-loss field untouched
+      // later used to silently apply a ZERO deficit — the field's
+      // placeholder text ("0.5") looks like a real value, so the target
+      // calories shown was just TDEE with no indication anything was
+      // missing. Pre-filling a real, commonly-recommended rate here means
+      // the plan always matches the stated goal unless the user changes it.
+      weeklyChange: goal === 'lose_weight' && !current.weeklyChange
+        ? (current.unitSystem === 'metric' ? '0.5' : '1.1')
+        : current.weeklyChange,
+    }));
   };
 
   const canonicalMetrics = () => ({
@@ -213,7 +234,7 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
           <Text style={{ ...WEB_TOKENS.typography.body, color: WEB_TOKENS.colors.textMuted, marginBottom: 24 }}>This helps us calculate your nutrition targets.</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', maxWidth: isDesktop ? 600 : '100%' }}>
             {GOALS.map((g) => (
-              <TouchableOpacity key={g.value} onPress={() => update('goal', g.value)} style={{ width: isDesktop ? 140 : '45%', padding: 20, borderRadius: WEB_TOKENS.radii.md, backgroundColor: form.goal === g.value ? WEB_TOKENS.colors.secondary : WEB_TOKENS.colors.surface, borderWidth: 2, borderColor: form.goal === g.value ? WEB_TOKENS.colors.primary : WEB_TOKENS.colors.border, alignItems: 'center' }}>
+              <TouchableOpacity key={g.value} onPress={() => selectGoal(g.value)} style={{ width: isDesktop ? 140 : '45%', padding: 20, borderRadius: WEB_TOKENS.radii.md, backgroundColor: form.goal === g.value ? WEB_TOKENS.colors.secondary : WEB_TOKENS.colors.surface, borderWidth: 2, borderColor: form.goal === g.value ? WEB_TOKENS.colors.primary : WEB_TOKENS.colors.border, alignItems: 'center' }}>
                 <Text style={{ fontSize: 32 }}>{g.emoji}</Text>
                 <Text style={{ ...WEB_TOKENS.typography.label, color: form.goal === g.value ? WEB_TOKENS.colors.primary : WEB_TOKENS.colors.text, marginTop: 8, textAlign: 'center' }}>{g.label}</Text>
               </TouchableOpacity>

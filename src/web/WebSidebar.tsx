@@ -1,4 +1,5 @@
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type ViewStyle } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { usePathname, useRouter } from 'expo-router';
 import { WebLogo } from './WebLogo';
 import { getWebTokens, WEB_TOKENS } from './tokens';
@@ -10,8 +11,7 @@ import { getVisibleNavItems } from '@/src/lib/profileEligibility';
 export function WebSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
   const mode = useThemeStore((s) => s.mode);
   const setMode = useThemeStore((s) => s.setMode);
   const tokens = getWebTokens(useIsDark());
@@ -38,7 +38,7 @@ export function WebSidebar() {
           return (
             <Pressable
               key={item.route}
-              accessibilityLabel={`Navigate to ${item.label}`}
+              accessibilityLabel={item.label}
               accessibilityRole="link"
               accessibilityState={{ selected: active }}
               onPress={() => router.push(item.route as Parameters<typeof router.push>[0])}

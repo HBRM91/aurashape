@@ -7,9 +7,9 @@ import {
   Alert,
   Switch,
   StyleSheet,
-  useWindowDimensions,
   Linking,
 } from 'react-native';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeStore } from '@/src/stores/theme';
 import { useNotificationStore } from '@/src/stores/notifications';
@@ -36,8 +36,7 @@ export function WebProfile() {
     try { require('@/src/lib/analytics').trackScreen('profile'); } catch {}
   }, []);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
   const tokens = getWebTokens(useIsDark());
 
   const { user, signOut } = useAuthStore();

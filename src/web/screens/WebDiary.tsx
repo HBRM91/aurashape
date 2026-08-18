@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   Alert,
   StyleSheet,
-  useWindowDimensions,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useIsDesktop } from '@/src/web/useIsDesktop';
 import { useDiaryStore } from '@/src/stores/diary';
 import { useOnboardingStore } from '@/src/stores/onboarding';
 import { useRecipeStore } from '@/src/stores/recipes';
@@ -41,8 +41,7 @@ export function WebDiary() {
     try { require('@/src/lib/analytics').trackScreen('diary'); } catch {}
   }, []);
 
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const isDesktop = useIsDesktop();
   const tokens = getWebTokens(useIsDark());
 
   const { selectedDate, getDailyCalories, getDailyMacros, copyFromDate, getEntriesBySlot, getSlotCalories, addEntry } = useDiaryStore();
