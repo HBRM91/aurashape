@@ -4,6 +4,7 @@ import { COLORS } from '@/src/constants/theme';
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeStore, useThemeColors } from '@/src/stores/theme';
 import { useNotificationStore } from '@/src/stores/notifications';
+import { usePrivacyStore } from '@/src/stores/privacy';
 import { useDiaryStore } from '@/src/stores/diary';
 import { useBodyStore } from '@/src/stores/body';
 import { useWorkoutStore } from '@/src/stores/workout';
@@ -27,7 +28,12 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    // Local mode has no logged-in user and no server profile to fetch — the
+    // spinner would otherwise spin forever instead of just showing nothing.
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     supabase
       .from('profiles')
       .select('*')
@@ -137,6 +143,7 @@ export default function ProfileScreen() {
 
         <SettingsButton label="Edit Profile" />
         <NotificationToggles />
+        <PrivacyToggles />
         <SettingsButton label="Units (Metric / Imperial)" />
         <DarkModeToggle />
         <SettingsButton label="Export My Data" onPress={handleExportData} />
@@ -195,6 +202,20 @@ function NotificationToggles() {
       <ToggleRow label="Meditation prompts" value={prefs.meditationReminder} onChange={(v) => prefs.setPref('meditationReminder', v)} />
       <ToggleRow label="Meal log reminders" value={prefs.mealReminders} onChange={(v) => prefs.setPref('mealReminders', v)} />
       <ToggleRow label="Weekly science tips" value={prefs.weeklyTips} onChange={(v) => prefs.setPref('weeklyTips', v)} />
+    </View>
+  );
+}
+
+function PrivacyToggles() {
+  const { newsletterOptIn, analyticsOptIn, aiOptIn, setOptIn } = usePrivacyStore();
+  const colors = useThemeColors();
+
+  return (
+    <View className="border-b py-4" style={{ borderColor: colors.border }}>
+      <Text className="text-base mb-3" style={{ color: colors.text }}>Privacy & Notifications</Text>
+      <ToggleRow label="Weekly science tip emails" value={newsletterOptIn} onChange={(v) => setOptIn('newsletterOptIn', v)} />
+      <ToggleRow label="Help improve Aurashape with analytics" value={analyticsOptIn} onChange={(v) => setOptIn('analyticsOptIn', v)} />
+      <ToggleRow label="Allow optional AI coaching" value={aiOptIn} onChange={(v) => setOptIn('aiOptIn', v)} />
     </View>
   );
 }

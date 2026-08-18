@@ -12,7 +12,7 @@ function assertExport() {
     { file: path.join('auth', 'login.html'), required: ['Welcome back', 'Email', 'Password', 'Log In'] },
     { file: path.join('auth', 'signup.html'), required: ['Start your journey', 'Email', 'Password', 'Sign Up'] },
     { file: path.join('auth', 'forgot-password.html'), required: ['Reset your password', 'Email', 'Send Reset Link'] },
-    { file: path.join('onboarding', 'privacy-consent.html'), required: ['Your Privacy Matters', 'Privacy Policy', 'Terms of Service', 'Continue'] },
+    { file: path.join('onboarding', 'privacy-consent.html'), required: ['Your data stays on your device', 'Privacy Policy', 'Terms of Service', 'Continue'] },
     { file: 'summary.html', required: ['Daily Summary', 'Nothing logged for this day'] },
   ];
 

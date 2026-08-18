@@ -13,6 +13,7 @@ import {
 import { useAuthStore } from '@/src/stores/auth';
 import { useThemeStore } from '@/src/stores/theme';
 import { useNotificationStore } from '@/src/stores/notifications';
+import { usePrivacyStore } from '@/src/stores/privacy';
 import { useDiaryStore } from '@/src/stores/diary';
 import { useBodyStore } from '@/src/stores/body';
 import { useWorkoutStore } from '@/src/stores/workout';
@@ -47,7 +48,12 @@ export function WebProfile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    // Local mode has no logged-in user and no server profile to fetch — the
+    // spinner would otherwise spin forever instead of just showing nothing.
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     supabase
       .from('profiles')
       .select('*')
@@ -167,6 +173,7 @@ export function WebProfile() {
         <Text style={styles.sectionLabel}>Settings</Text>
         <SettingRow label="Edit Profile" />
         <NotificationSettings />
+        <PrivacySettings />
         <SettingRow label="Units (Metric / Imperial)" />
         <ThemeSettings />
         <TouchableOpacity onPress={handleExportData} style={styles.settingBtn}>
@@ -233,6 +240,18 @@ function NotificationSettings() {
       <ToggleBox label="Meditation prompts" value={prefs.meditationReminder} onChange={(v) => prefs.setPref('meditationReminder', v)} />
       <ToggleBox label="Meal log reminders" value={prefs.mealReminders} onChange={(v) => prefs.setPref('mealReminders', v)} />
       <ToggleBox label="Weekly science tips" value={prefs.weeklyTips} onChange={(v) => prefs.setPref('weeklyTips', v)} />
+    </View>
+  );
+}
+
+function PrivacySettings() {
+  const { newsletterOptIn, analyticsOptIn, aiOptIn, setOptIn } = usePrivacyStore();
+  return (
+    <View style={styles.settingSection}>
+      <Text style={styles.sectionHeading}>Privacy & Notifications</Text>
+      <ToggleBox label="Weekly science tip emails" value={newsletterOptIn} onChange={(v) => setOptIn('newsletterOptIn', v)} />
+      <ToggleBox label="Help improve Aurashape with analytics" value={analyticsOptIn} onChange={(v) => setOptIn('analyticsOptIn', v)} />
+      <ToggleBox label="Allow optional AI coaching" value={aiOptIn} onChange={(v) => setOptIn('aiOptIn', v)} />
     </View>
   );
 }

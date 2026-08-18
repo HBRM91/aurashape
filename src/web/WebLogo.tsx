@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import {
+  Image,
   StyleSheet,
   Text,
   View,
@@ -14,12 +15,15 @@ export interface WebLogoProps {
   style?: StyleProp<ViewStyle>;
 }
 
+// The actual Aurashape mark (aura/glow icon) — same asset used for the app
+// icon and favicon, so the brand is consistent between the browser tab, the
+// home-screen icon, and the in-app UI instead of a generic letter tile.
+const LOGO_MARK = require('../../assets/images/icon.svg');
+
 export function WebLogo({ compact = false, children, style }: WebLogoProps) {
   return (
     <View accessible={true} accessibilityLabel="Aurashape" accessibilityRole="image" style={[styles.logo, style]}>
-      <View style={styles.mark}>
-        <Text style={styles.markText}>A</Text>
-      </View>
+      <Image source={LOGO_MARK} style={styles.mark} accessibilityIgnoresInvertColors />
       <View style={styles.copy}>
         <Text style={styles.name}>Aurashape</Text>
         {!compact ? <Text style={styles.tagline}>Shape your everyday health</Text> : null}
@@ -36,17 +40,9 @@ const styles = StyleSheet.create({
     gap: WEB_TOKENS.spacing.sm,
   },
   mark: {
-    alignItems: 'center',
-    backgroundColor: WEB_TOKENS.colors.primary,
     borderRadius: WEB_TOKENS.radii.sm,
     height: 36,
-    justifyContent: 'center',
     width: 36,
-  },
-  markText: {
-    color: WEB_TOKENS.colors.surface,
-    fontSize: 20,
-    fontWeight: '700',
   },
   copy: {
     gap: 1,
