@@ -42,6 +42,7 @@ export function validateOnboardingForm(form: OnboardingFormValues): Partial<Reco
 export function validateOnboardingStep(form: OnboardingFormValues, step: number): Partial<Record<OnboardingField, string>> {
   if (step === 0) return validateFields(form, ['goal']);
   if (step === 1) return validateFields(form, ['sex', 'dob', 'height', 'weight']);
-  if (step === 2) return validateFields(form, ['activityLevel', 'diet']);
+  if (step === 2) return validateFields(form, ['activityLevel']);
+  if (step === 3) return validateFields(form, ['diet']);
   return {};
 }

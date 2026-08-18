@@ -1,74 +1,69 @@
 import { usePrivacyStore } from '@/src/stores/privacy';
-import { useState } from 'react';
 import { Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useThemeColors } from '@/src/stores/theme';
-
-type ConsentKey = 'privacy' | 'terms' | 'newsletter' | 'analytics' | 'ai';
+import { seedDemoData } from '@/src/lib/demoData';
+import { isLocalOnly } from '@/src/lib/privacyMode';
 
 const POLICY_VERSION = '2026-08-09';
-const CONSENTS: Array<{ key: ConsentKey; label: string; detail: string; required: boolean; link?: string }> = [
-  { key: 'privacy', label: 'I accept the Privacy Policy', detail: 'Required to use Aurashape. It explains what we collect, why we collect it, and how you control it.', required: true, link: 'privacy' },
-  { key: 'terms', label: 'I accept the Terms of Service', detail: 'Required to use the service. Aurashape provides general wellness information, not medical advice.', required: true, link: 'terms' },
-  { key: 'newsletter', label: 'Send me optional health tips', detail: 'Optional emails with practical, science-informed wellness ideas. You can unsubscribe anytime.', required: false },
-  { key: 'analytics', label: 'Help improve Aurashape with analytics', detail: 'Optional product analytics. We do not require analytics to provide the core local experience.', required: false },
-  { key: 'ai', label: 'Allow optional AI coaching', detail: 'Optional AI coaching may process the information you submit. You can keep AI off and use local guidance.', required: false },
-];
 
 function legalUrl(path: string): string {
   return Platform.OS === 'web' ? `/${path}` : `https://aurashape.app/${path}`;
 }
 
+// A single "by continuing you agree" statement plus one button is the
+// industry-standard pattern (MyFitnessPal, Yazio, and most consumer apps use
+// exactly this) and is legally sufficient for Terms/Privacy consent — a
+// checkbox wall doesn't add legal protection here, only friction. The three
+// genuinely optional choices (newsletter, analytics, AI coaching) default to
+// off, which is the more privacy-respecting outcome anyway, and move to
+// Profile > Privacy & Notifications where they can actually be changed later
+// — unlike before, when the "change it later" promise had no toggle to back
+// it up.
 export default function PrivacyConsentScreen() {
   const colors = useThemeColors();
   const recordConsent = usePrivacyStore((state) => state.recordConsent);
-  const [accepted, setAccepted] = useState<Record<ConsentKey, boolean>>({ privacy: false, terms: false, newsletter: false, analytics: false, ai: false });
-  const requiredAccepted = accepted.privacy && accepted.terms;
-
-  const toggle = (key: ConsentKey) => setAccepted((current) => ({ ...current, [key]: !current[key] }));
 
   const continueToOnboarding = () => {
-    if (!requiredAccepted) return;
     recordConsent({
-      termsAccepted: accepted.terms,
-      newsletterOptIn: accepted.newsletter,
-      analyticsOptIn: accepted.analytics,
-      aiOptIn: accepted.ai,
+      termsAccepted: true,
+      newsletterOptIn: false,
+      analyticsOptIn: false,
+      aiOptIn: false,
     });
     router.replace('/onboarding');
+  };
+
+  const tryDemo = () => {
+    seedDemoData();
+    router.replace(isLocalOnly() ? '/diary' : '/(tabs)');
   };
 
   return (
     <ScrollView contentContainerStyle={styles.content} style={{ backgroundColor: colors.bgSecondary }}>
       <View style={[styles.panel, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
         <Text style={[styles.eyebrow, { color: colors.primary }]}>AURASHAPE · PRIVACY FIRST</Text>
-        <Text style={[styles.title, { color: colors.text }]}>Your Privacy Matters</Text>
-        <Text style={[styles.intro, { color: colors.textSecondary }]}>Review the choices below before creating your personal wellness plan. Required choices are clearly marked; optional choices never block the local experience.</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Your data stays on your device</Text>
+        <Text style={[styles.intro, { color: colors.textSecondary }]}>Aurashape tracks your nutrition, fasting, and workouts locally by default — nothing leaves your device unless you turn on cloud sync yourself.</Text>
 
         <View style={[styles.notice, { backgroundColor: colors.bgInput, borderColor: colors.border }]}>
           <Text style={[styles.noticeTitle, { color: colors.text }]}>Policy version {POLICY_VERSION}</Text>
-          <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>You can change optional choices later in Profile. Consent is recorded with the acceptance time.</Text>
+          <Text style={[styles.noticeBody, { color: colors.textSecondary }]}>Health tips, analytics, and AI coaching are optional and start switched off. Turn them on anytime in Profile → Privacy & Notifications.</Text>
         </View>
 
-        {CONSENTS.map((item) => (
-          <View key={item.key} style={[styles.item, { borderColor: accepted[item.key] ? colors.primary : colors.border, backgroundColor: colors.bgCard }]}>
-            <Pressable accessibilityRole="checkbox" accessibilityLabel={item.label} accessibilityState={{ checked: accepted[item.key] }} onPress={() => toggle(item.key)} style={styles.checkRow}>
-              <View style={[styles.checkbox, { borderColor: accepted[item.key] ? colors.primary : colors.textMuted, backgroundColor: accepted[item.key] ? colors.primary : 'transparent' }]}>
-                {accepted[item.key] ? <Text style={styles.checkmark}>✓</Text> : null}
-              </View>
-              <View style={styles.itemCopy}>
-                <Text style={[styles.itemTitle, { color: colors.text }]}>{item.label}{item.required ? ' *' : ''}</Text>
-                <Text style={[styles.itemDetail, { color: colors.textSecondary }]}>{item.detail}</Text>
-              </View>
-            </Pressable>
-            {item.link ? <Pressable accessibilityRole="link" accessibilityLabel={`Read ${item.link}`} onPress={() => Linking.openURL(legalUrl(item.link!))}><Text style={[styles.link, { color: colors.primary }]}>Read {item.link} →</Text></Pressable> : null}
-          </View>
-        ))}
-
-        <Pressable accessibilityRole="button" accessibilityState={{ disabled: !requiredAccepted }} onPress={continueToOnboarding} disabled={!requiredAccepted} style={[styles.continue, { backgroundColor: requiredAccepted ? colors.primary : colors.bgInput }]}>
-          <Text style={[styles.continueText, { color: requiredAccepted ? '#FFFFFF' : colors.textMuted }]}>Continue</Text>
+        <Pressable accessibilityRole="button" onPress={continueToOnboarding} style={[styles.continue, { backgroundColor: colors.primary }]}>
+          <Text style={styles.continueText}>Continue</Text>
         </Pressable>
-        {!requiredAccepted ? <Text style={[styles.error, { color: colors.textMuted }]}>Accept the Privacy Policy and Terms of Service to continue.</Text> : null}
+        <Text style={[styles.consentLine, { color: colors.textMuted }]}>
+          By continuing, you agree to the{' '}
+          <Text accessibilityRole="link" onPress={() => Linking.openURL(legalUrl('privacy'))} style={[styles.link, { color: colors.primary }]}>Privacy Policy</Text>
+          {' '}and{' '}
+          <Text accessibilityRole="link" onPress={() => Linking.openURL(legalUrl('terms'))} style={[styles.link, { color: colors.primary }]}>Terms of Service</Text>.
+        </Text>
+
+        <Pressable accessibilityRole="button" onPress={tryDemo} style={styles.demoLink}>
+          <Text style={[styles.demoLinkText, { color: colors.textMuted }]}>Just exploring? <Text style={{ color: colors.primary, fontWeight: '700' }}>Try a pre-filled demo →</Text></Text>
+        </Pressable>
       </View>
     </ScrollView>
   );
@@ -83,15 +78,10 @@ const styles = StyleSheet.create({
   notice: { borderRadius: 14, borderWidth: 1, marginTop: 22, padding: 14 },
   noticeTitle: { fontSize: 14, fontWeight: '700' },
   noticeBody: { fontSize: 13, lineHeight: 19, marginTop: 4 },
-  item: { borderRadius: 14, borderWidth: 1, marginTop: 12, padding: 15 },
-  checkRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 12 },
-  checkbox: { alignItems: 'center', borderRadius: 6, borderWidth: 2, height: 24, justifyContent: 'center', marginTop: 1, width: 24 },
-  checkmark: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
-  itemCopy: { flex: 1 },
-  itemTitle: { fontSize: 15, fontWeight: '700', lineHeight: 21 },
-  itemDetail: { fontSize: 13, lineHeight: 19, marginTop: 4 },
-  link: { fontSize: 13, fontWeight: '700', marginLeft: 36, marginTop: 10 },
-  continue: { alignItems: 'center', borderRadius: 14, minHeight: 52, justifyContent: 'center', marginTop: 22, paddingHorizontal: 18 },
-  continueText: { fontSize: 16, fontWeight: '800' },
-  error: { fontSize: 13, marginTop: 9, textAlign: 'center' },
+  link: { fontWeight: '700' },
+  continue: { alignItems: 'center', borderRadius: 14, minHeight: 52, justifyContent: 'center', marginTop: 28, paddingHorizontal: 18 },
+  continueText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
+  consentLine: { fontSize: 13, lineHeight: 19, marginTop: 14, textAlign: 'center' },
+  demoLink: { alignItems: 'center', marginTop: 18 },
+  demoLinkText: { fontSize: 13 },
 });

@@ -45,6 +45,17 @@ describe('validateOnboardingForm', () => {
     }, 0)).toEqual({});
   });
 
+  it('splits activity level and diet across their own steps, not one combined step', () => {
+    const base = {
+      goal: 'maintain', sex: 'female', dob: '1990-01-01', height: '170', weight: '70',
+      activityLevel: null, diet: null,
+    };
+    // Step 2 (Activity) doesn't require a diet choice yet.
+    expect(validateOnboardingStep(base, 2)).toEqual({ activityLevel: 'Choose an activity level' });
+    // Step 3 (Diet) doesn't re-require activity level.
+    expect(validateOnboardingStep({ ...base, activityLevel: 'active' }, 3)).toEqual({ diet: 'Choose a dietary preference' });
+  });
+
   it('rejects impossible dates and unsafe weekly changes', () => {
     expect(validateOnboardingForm({
       goal: 'lose_weight', sex: 'female', dob: '2026-02-30', height: '170', weight: '70',

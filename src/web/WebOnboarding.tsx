@@ -47,8 +47,10 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
     weight: onboarding.weightKg?.toString() || '',
     targetWeight: onboarding.targetWeightKg?.toString() || '',
     activityLevel: onboarding.activityLevel,
-    diet: onboarding.dietaryPreference,
-    dietaryPreferences: onboarding.dietaryPreferences.length ? onboarding.dietaryPreferences : onboarding.dietaryPreference ? [onboarding.dietaryPreference] : [],
+    // Default to Omnivore so most people can just tap Next — customizing
+    // diet/allergies is still one tap away, it's just no longer mandatory.
+    diet: onboarding.dietaryPreference || 'omnivore',
+    dietaryPreferences: onboarding.dietaryPreferences.length ? onboarding.dietaryPreferences : [onboarding.dietaryPreference || 'omnivore'],
     allergies: onboarding.allergies,
     unitSystem: onboarding.unitSystem,
     fastingEnabled: onboarding.fastingEnabled,
@@ -66,8 +68,13 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
   const toggleListValue = (key: 'dietaryPreferences' | 'allergies', value: string) => {
     setForm((current) => {
       const values = current[key] as string[];
-      const next = values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
-      return { ...current, [key]: next, ...(key === 'dietaryPreferences' ? { diet: (next[0] as DietaryPreference | undefined) || null } : {}) };
+      let next = values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
+      // Untoggling every pill falls back to Omnivore, chip and all, rather
+      // than leaving no diet selected — the step no longer has a way to
+      // leave this blank on purpose, since "no restrictions" already has a
+      // default value.
+      if (key === 'dietaryPreferences' && next.length === 0) next = ['omnivore'];
+      return { ...current, [key]: next, ...(key === 'dietaryPreferences' ? { diet: (next[0] as DietaryPreference) } : {}) };
     });
   };
 
@@ -248,18 +255,25 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
       )}
 
       {step === 2 && (
-        <View style={{ maxWidth: 500, alignSelf: 'center', width: '100%' }}>
-          <Text style={{ ...WEB_TOKENS.typography.heading, color: WEB_TOKENS.colors.text, marginBottom: 16, textAlign: 'center' }}>Activity & Diet</Text>
-          <Text style={{ ...WEB_TOKENS.typography.label, color: WEB_TOKENS.colors.textMuted, marginBottom: 8 }}>Activity Level</Text>
-          <View style={{ gap: 8, marginBottom: 24 }}>
+        <View style={{ maxWidth: 500, alignSelf: 'center', width: '100%', alignItems: 'center' }}>
+          <Text style={{ ...WEB_TOKENS.typography.heading, color: WEB_TOKENS.colors.text, marginBottom: 8 }}>How active are you?</Text>
+          <Text style={{ ...WEB_TOKENS.typography.body, color: WEB_TOKENS.colors.textMuted, marginBottom: 24, textAlign: 'center' }}>This helps us calculate your daily calorie needs.</Text>
+          <View style={{ gap: 8, width: '100%' }}>
             {ACTIVITY_LEVELS.map((a) => (
-              <TouchableOpacity key={a.value} onPress={() => update('activityLevel', a.value)} style={{ padding: 12, borderRadius: WEB_TOKENS.radii.md, backgroundColor: form.activityLevel === a.value ? WEB_TOKENS.colors.secondary : WEB_TOKENS.colors.surface, borderWidth: 2, borderColor: form.activityLevel === a.value ? WEB_TOKENS.colors.primary : WEB_TOKENS.colors.border }}>
+              <TouchableOpacity key={a.value} onPress={() => update('activityLevel', a.value)} style={{ padding: 14, borderRadius: WEB_TOKENS.radii.md, backgroundColor: form.activityLevel === a.value ? WEB_TOKENS.colors.secondary : WEB_TOKENS.colors.surface, borderWidth: 2, borderColor: form.activityLevel === a.value ? WEB_TOKENS.colors.primary : WEB_TOKENS.colors.border }}>
                 <Text style={{ ...WEB_TOKENS.typography.label, color: form.activityLevel === a.value ? WEB_TOKENS.colors.primary : WEB_TOKENS.colors.text }}>{a.label}</Text>
                 <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.textMuted }}>{a.desc}</Text>
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={{ ...WEB_TOKENS.typography.label, color: WEB_TOKENS.colors.textMuted, marginBottom: 8 }}>Dietary preferences (choose all that fit)</Text>
+        </View>
+      )}
+
+      {step === 3 && (
+        <View style={{ maxWidth: 500, alignSelf: 'center', width: '100%' }}>
+          <Text style={{ ...WEB_TOKENS.typography.heading, color: WEB_TOKENS.colors.text, marginBottom: 8, textAlign: 'center' }}>Diet & allergies</Text>
+          <Text style={{ ...WEB_TOKENS.typography.body, color: WEB_TOKENS.colors.textMuted, marginBottom: 20, textAlign: 'center' }}>We've assumed no restrictions — adjust anything that fits you.</Text>
+          <Text style={{ ...WEB_TOKENS.typography.label, color: WEB_TOKENS.colors.textMuted, marginBottom: 8 }}>Dietary preferences</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {DIETARY_OPTIONS.map((diet) => (
               <TouchableOpacity key={diet} accessibilityRole="checkbox" accessibilityState={{ checked: form.dietaryPreferences.includes(diet) }} onPress={() => toggleListValue('dietaryPreferences', diet)} style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: WEB_TOKENS.radii.pill, backgroundColor: form.dietaryPreferences.includes(diet) ? WEB_TOKENS.colors.secondary : WEB_TOKENS.colors.surface, borderWidth: 2, borderColor: form.dietaryPreferences.includes(diet) ? WEB_TOKENS.colors.primary : WEB_TOKENS.colors.border }}>
@@ -267,7 +281,7 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={{ ...WEB_TOKENS.typography.label, color: WEB_TOKENS.colors.textMuted, marginBottom: 8, marginTop: 20 }}>Allergies and exclusions</Text>
+          <Text style={{ ...WEB_TOKENS.typography.label, color: WEB_TOKENS.colors.textMuted, marginBottom: 8, marginTop: 20 }}>Allergies and exclusions (optional)</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {ALLERGY_OPTIONS.map((allergy) => (
               <TouchableOpacity key={allergy} accessibilityRole="checkbox" accessibilityState={{ checked: form.allergies.includes(allergy) }} onPress={() => toggleListValue('allergies', allergy)} style={{ paddingHorizontal: 12, paddingVertical: 9, borderRadius: WEB_TOKENS.radii.pill, backgroundColor: form.allergies.includes(allergy) ? WEB_TOKENS.colors.errorSurface : WEB_TOKENS.colors.surface, borderWidth: 2, borderColor: form.allergies.includes(allergy) ? WEB_TOKENS.colors.error : WEB_TOKENS.colors.border }}>
@@ -278,7 +292,7 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
         </View>
       )}
 
-      {step === 3 && (
+      {step === 4 && (
         <View style={{ alignItems: 'center' }}>
           <Text style={{ ...WEB_TOKENS.typography.heading, color: WEB_TOKENS.colors.text, marginBottom: 8 }}>Intermittent Fasting</Text>
           <Text style={{ ...WEB_TOKENS.typography.body, color: WEB_TOKENS.colors.textMuted, marginBottom: 24, maxWidth: 580, textAlign: 'center' }}>Optional — select a schedule only if it fits your life. Aurashape does not provide medical clearance for fasting.</Text>
@@ -294,7 +308,7 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
         </View>
       )}
 
-      {step === 4 && (
+      {step === 5 && (
         <View style={{ maxWidth: 400, alignSelf: 'center', width: '100%', alignItems: 'center' }}>
           <Text style={{ ...WEB_TOKENS.typography.heading, color: WEB_TOKENS.colors.text, marginBottom: 8 }}>Set your timeline</Text>
           <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.textMuted, marginBottom: 24, textAlign: 'center' }}>Adjust the values below to see how your targets change.</Text>
@@ -360,22 +374,17 @@ export function WebOnboarding({ onComplete }: { onComplete: () => void }) {
                       )}
                     </View>
                   )}
+                  <View style={{ paddingTop: 8, borderTopWidth: 1, borderTopColor: WEB_TOKENS.colors.border, marginTop: 4 }}>
+                    <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.textMuted, marginBottom: 6, marginTop: 12 }}>Want weekly science-based tips? Add your email (optional)</Text>
+                    <TextInput style={{ width: '100%', padding: 12, borderRadius: WEB_TOKENS.radii.sm, backgroundColor: WEB_TOKENS.colors.surface, borderWidth: 1, borderColor: form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? WEB_TOKENS.colors.errorBorder : WEB_TOKENS.colors.border, color: WEB_TOKENS.colors.text }} value={form.email} onChangeText={(v) => update('email', v)} placeholder="your@email.com" placeholderTextColor={WEB_TOKENS.colors.textMuted} keyboardType="email-address" autoCapitalize="none" />
+                    {form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.error, marginTop: 6 }}>Please enter a valid email address, or leave it blank.</Text> : null}
+                  </View>
                 </View>
               );
             } catch {
               return <Text style={{ ...WEB_TOKENS.typography.body, color: WEB_TOKENS.colors.textMuted }}>Complete previous steps to see your plan.</Text>;
             }
           })()}
-        </View>
-      )}
-
-      {step === 5 && (
-        <View style={{ maxWidth: 400, alignSelf: 'center', width: '100%', alignItems: 'center' }}>
-          <Text style={{ ...WEB_TOKENS.typography.heading, color: WEB_TOKENS.colors.text, marginBottom: 8 }}>Weekly Science Tips</Text>
-          <Text style={{ ...WEB_TOKENS.typography.body, color: WEB_TOKENS.colors.textMuted, marginBottom: 24, textAlign: 'center' }}>Optional — get evidence-based health tips every Friday. Unsubscribe anytime, and you can skip this and add it later from your profile.</Text>
-          <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.textMuted, marginBottom: 6, alignSelf: 'stretch' }}>Email address (optional)</Text>
-          <TextInput style={{ width: '100%', padding: 12, borderRadius: WEB_TOKENS.radii.sm, backgroundColor: WEB_TOKENS.colors.surface, borderWidth: 1, borderColor: form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? WEB_TOKENS.colors.errorBorder : WEB_TOKENS.colors.border, color: WEB_TOKENS.colors.text, marginBottom: 16 }} value={form.email} onChangeText={(v) => update('email', v)} placeholder="your@email.com" placeholderTextColor={WEB_TOKENS.colors.textMuted} keyboardType="email-address" autoCapitalize="none" />
-          {form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? <Text style={{ ...WEB_TOKENS.typography.caption, color: WEB_TOKENS.colors.error, marginTop: -8, marginBottom: 12, alignSelf: 'stretch' }}>Please enter a valid email address, or leave it blank.</Text> : null}
         </View>
       )}
 

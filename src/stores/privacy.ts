@@ -12,6 +12,7 @@ interface PrivacyState {
   aiOptIn: boolean;
   setConsentAccepted: (value: boolean) => void;
   recordConsent: (consent: { termsAccepted: boolean; newsletterOptIn: boolean; analyticsOptIn: boolean; aiOptIn: boolean }) => void;
+  setOptIn: (key: 'newsletterOptIn' | 'analyticsOptIn' | 'aiOptIn', value: boolean) => void;
 }
 
 export const usePrivacyStore = create<PrivacyState>()(
@@ -25,6 +26,7 @@ export const usePrivacyStore = create<PrivacyState>()(
       analyticsOptIn: false,
       aiOptIn: false,
       setConsentAccepted: (value) => set({ consentAccepted: value }),
+      setOptIn: (key, value) => set({ [key]: value }),
       recordConsent: (consent) => set({
         ...consent,
         consentAccepted: true,
